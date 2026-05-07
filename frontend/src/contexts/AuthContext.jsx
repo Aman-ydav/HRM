@@ -117,7 +117,7 @@ export function AuthProvider({ children }) {
         payload: { user, employee, token },
       })
 
-      return { success: true }
+      return { success: true, user }
     } catch (error) {
       const errorMsg = error.message || 'Login failed'
       dispatch({ type: 'SET_ERROR', payload: errorMsg })
@@ -150,7 +150,7 @@ export function AuthProvider({ children }) {
         payload: { user, employee, token },
       })
 
-      return { success: true }
+      return { success: true, user }
     } catch (error) {
       const errorMsg = error.message || 'Registration failed'
       dispatch({ type: 'SET_ERROR', payload: errorMsg })
@@ -175,7 +175,7 @@ export function AuthProvider({ children }) {
     login,
     register,
     logout,
-    isAuthenticated: !!state.token,
+    isAuthenticated: !!(state.token || localStorage.getItem('token')),
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

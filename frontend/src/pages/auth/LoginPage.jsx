@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { Button, Input, LoadingSpinner } from '../../components/ui'
+import { getDefaultRouteForRole } from '../../lib/auth'
 
 function LoginPage() {
   const [email, setEmail] = useState('')
@@ -19,7 +20,7 @@ function LoginPage() {
     const result = await login(email, password)
     
     if (result.success) {
-      navigate('/dashboard')
+      navigate(getDefaultRouteForRole(result.user?.role))
     } else {
       setError(result.error || 'Login failed')
     }
@@ -98,7 +99,7 @@ function LoginPage() {
       <div className="p-4 bg-gray-800/50 border border-gray-700 rounded-lg text-xs text-gray-400">
         <p className="font-medium text-white mb-2">Demo Credentials:</p>
         <p>Admin: admin@hrm.com / admin123</p>
-        <p>HR Manager: hr@hrm.com / hr123</p>
+        <p>HR Manager: hr@hrm.com / hr12345</p>
         <p>Employee: john.doe@hrm.com / john123</p>
       </div>
     </form>

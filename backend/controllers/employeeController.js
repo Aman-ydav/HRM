@@ -90,6 +90,58 @@ export const getAllEmployees = async (req, res, next) => {
   }
 };
 
+// Update Employee by Admin/HR
+export const updateEmployeeByAdmin = async (req, res, next) => {
+  try {
+    const { employeeId } = req.params;
+    const {
+      firstName,
+      lastName,
+      phone,
+      department,
+      position,
+      status,
+      rewardPoints,
+      totalBonus,
+    } = req.body;
+
+    const employee = await Employee.findById(employeeId);
+    if (!employee) {
+      return sendError(res, 'Employee not found', 404);
+    }
+
+    if (firstName !== undefined) employee.firstName = firstName;
+    if (lastName !== undefined) employee.lastName = lastName;
+    if (phone !== undefined) employee.phone = phone;
+    if (department !== undefined) employee.department = department;
+    if (position !== undefined) employee.position = position;
+    if (status !== undefined) employee.status = status;
+    if (rewardPoints !== undefined) employee.rewardPoints = Number(rewardPoints);
+    if (totalBonus !== undefined) employee.totalBonus = Number(totalBonus);
+
+    await employee.save();
+
+    return sendSuccess(res, employee, 'Employee updated successfully', 200);
+  } catch (error) {
+    console.error('Update employee by admin error:', error);
+    next(error);
+  }
+};
+
+// Get Employee Directory (lightweight list for selectors/search)
+export const getEmployeeDirectory = async (req, res, next) => {
+  try {
+    const employees = await Employee.find({ status: 'active' })
+      .select('_id employeeId firstName lastName department position email')
+      .sort({ firstName: 1, lastName: 1 });
+
+    return sendSuccess(res, employees, 'Employee directory fetched successfully', 200);
+  } catch (error) {
+    console.error('Get employee directory error:', error);
+    next(error);
+  }
+};
+
 // Get Employee Dashboard
 export const getEmployeeDashboard = async (req, res, next) => {
   try {
@@ -238,6 +290,8 @@ export default {
   getProfile,
   updateProfile,
   getAllEmployees,
+  updateEmployeeByAdmin,
+  getEmployeeDirectory,
   getEmployeeDashboard,
   getEmployeeRewards,
   getAttendanceSummary,

@@ -6,6 +6,7 @@ import {
   getAIRecommendations,
   getBurnoutAnalysis,
   getRewardFairnessAnalysis,
+  chatWithAI,
 } from '../controllers/aiController.js';
 import { protect, authorize } from '../middleware/auth.js';
 
@@ -18,5 +19,6 @@ router.use(protect);
 router.get('/recommendations/:employeeId', getAIRecommendations);
 router.get('/burnout-analysis', authorize('admin', 'hr_manager'), getBurnoutAnalysis);
 router.get('/fairness-analysis', authorize('admin', 'hr_manager'), getRewardFairnessAnalysis);
+router.post('/chat', chatWithAI);
 
 export default router;

@@ -24,7 +24,7 @@ router.put('/:id', authorize('admin', 'hr_manager'), updatePerformanceReview);
 // Get routes
 router.get('/history/:employeeId', getPerformanceHistory);
 router.get('/analytics/:employeeId', getPerformanceAnalytics);
-router.get('/top-performers', authorize('admin', 'hr_manager'), getTopPerformers);
+router.get('/top-performers', authorize('admin', 'hr_manager', 'employee'), getTopPerformers);
 router.get('/department/:department', getDepartmentPerformance);
 
 export default router;

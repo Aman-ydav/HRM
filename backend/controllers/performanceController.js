@@ -104,6 +104,13 @@ export const getPerformanceHistory = async (req, res, next) => {
     const { employeeId } = req.params;
     const { page, limit, skip } = getPaginationParams(req.query);
 
+    if (req.userRole === 'employee') {
+      const userEmployee = await Employee.findOne({ userId: req.userId });
+      if (!userEmployee || userEmployee._id.toString() !== employeeId) {
+        return sendError(res, 'Not authorized to view other employees performance', 403);
+      }
+    }
+
     const employee = await Employee.findById(employeeId);
     if (!employee) {
       return sendError(res, 'Employee not found', 404);
@@ -127,6 +134,13 @@ export const getPerformanceHistory = async (req, res, next) => {
 export const getPerformanceAnalytics = async (req, res, next) => {
   try {
     const { employeeId } = req.params;
+
+    if (req.userRole === 'employee') {
+      const userEmployee = await Employee.findOne({ userId: req.userId });
+      if (!userEmployee || userEmployee._id.toString() !== employeeId) {
+        return sendError(res, 'Not authorized to view other employees analytics', 403);
+      }
+    }
 
     const employee = await Employee.findById(employeeId);
     if (!employee) {

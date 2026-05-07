@@ -50,6 +50,8 @@ export const authService = {
 export const employeeService = {
   getProfile: () => apiClient.get('/employees/profile'),
   updateProfile: (data) => apiClient.put('/employees/profile', data),
+  updateEmployeeById: (employeeId, data) => apiClient.put(`/employees/${employeeId}`, data),
+  getDirectory: () => apiClient.get('/employees/directory'),
   getAllEmployees: (page = 1, limit = 10, search = '') => 
     apiClient.get('/employees/all', { params: { page, limit, search } }),
   getDashboard: () => apiClient.get('/employees/dashboard'),
@@ -121,4 +123,5 @@ export const aiService = {
     apiClient.get(`/ai/recommendations/${employeeId}`),
   getBurnoutAnalysis: () => apiClient.get('/ai/burnout-analysis'),
   getRewardFairnessAnalysis: () => apiClient.get('/ai/fairness-analysis'),
+  chat: (message, employeeId = null) => apiClient.post('/ai/chat', { message, employeeId }),
 }

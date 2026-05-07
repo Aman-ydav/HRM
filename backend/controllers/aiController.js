@@ -1,143 +1,306 @@
-// controllers/aiController.js
-// AI Analysis Controller
-
+import axios from 'axios';
 import Employee from '../models/Employee.js';
 import Attendance from '../models/Attendance.js';
 import Performance from '../models/Performance.js';
 import Reward from '../models/Reward.js';
-import axios from 'axios';
+import Feedback from '../models/Feedback.js';
 import { sendSuccess, sendError } from '../utils/responseUtils.js';
 
-// Get AI Recommendations
+const ATTENDED_STATUSES = new Set(['present', 'late', 'half_day']);
+
+const getMonthRange = (baseDate = new Date()) => {
+  const start = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+  const end = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0, 23, 59, 59, 999);
+  return { start, end };
+};
+
+const safeRound = (value, decimals = 2) => {
+  if (!Number.isFinite(value)) return 0;
+  const factor = 10 ** decimals;
+  return Math.round(value * factor) / factor;
+};
+
+const getAttendanceRate = (records = []) => {
+  if (!records.length) return 0;
+  const attended = records.filter((item) => ATTENDED_STATUSES.has(item.status)).length;
+  return safeRound((attended / records.length) * 100, 1);
+};
+
+const getEmployeeFromUser = async (userId) => {
+  return Employee.findOne({ userId });
+};
+
+const canAccessEmployee = async (req, employeeId) => {
+  if (req.userRole !== 'employee') {
+    return true;
+  }
+
+  const myEmployee = await getEmployeeFromUser(req.userId);
+  if (!myEmployee) {
+    return false;
+  }
+
+  return myEmployee._id.toString() === employeeId.toString();
+};
+
+const buildEmployeeContext = async (employeeId) => {
+  const employee = await Employee.findById(employeeId);
+  if (!employee) {
+    return null;
+  }
+
+  const { start, end } = getMonthRange();
+
+  const [attendance, performance, rewards, feedbackReceived] = await Promise.all([
+    Attendance.find({ employeeId, date: { $gte: start, $lte: end } }),
+    Performance.findOne({ employeeId }).sort({ createdAt: -1 }),
+    Reward.find({ employeeId, approvalStatus: 'approved' }).sort({ createdAt: -1 }),
+    Feedback.find({ receiver: employeeId }).sort({ createdAt: -1 }).limit(20),
+  ]);
+
+  const attendanceRate = getAttendanceRate(attendance);
+  const lateCount = attendance.filter((item) => item.status === 'late').length;
+  const rewardPoints = rewards.reduce((sum, item) => sum + (item.points || 0), 0);
+  const rewardBonus = rewards.reduce((sum, item) => sum + (item.bonus || 0), 0);
+  const averageFeedback = feedbackReceived.length
+    ? safeRound(feedbackReceived.reduce((sum, item) => sum + (item.rating || 0), 0) / feedbackReceived.length, 1)
+    : 0;
+
+  return {
+    employee: {
+      id: employee._id,
+      name: `${employee.firstName} ${employee.lastName}`,
+      department: employee.department,
+      position: employee.position,
+    },
+    metrics: {
+      attendanceRate,
+      attendanceRecords: attendance.length,
+      lateCount,
+      overallPerformance: performance?.overallPerformance || 0,
+      monthlyRating: performance?.monthlyRating || 0,
+      taskCompletionRate: performance?.taskCompletionRate || 0,
+      collaborationScore: performance?.teamCollaborationScore || 0,
+      rewardCount: rewards.length,
+      rewardPoints,
+      rewardBonus,
+      averageFeedback,
+    },
+  };
+};
+
+const buildOrgContext = async () => {
+  const { start, end } = getMonthRange();
+
+  const [employees, attendanceRecords, rewards, topPerformances] = await Promise.all([
+    Employee.find({ status: 'active' }),
+    Attendance.find({ date: { $gte: start, $lte: end } }),
+    Reward.find({ approvalStatus: 'approved' }),
+    Performance.find().sort({ overallPerformance: -1 }).limit(5).populate('employeeId', 'firstName lastName department'),
+  ]);
+
+  const attendanceRate = getAttendanceRate(attendanceRecords);
+  const totalBonus = rewards.reduce((sum, item) => sum + (item.bonus || 0), 0);
+  const rewardsByType = rewards.reduce((acc, item) => {
+    acc[item.rewardType] = (acc[item.rewardType] || 0) + 1;
+    return acc;
+  }, {});
+
+  const departmentBreakdown = employees.reduce((acc, item) => {
+    acc[item.department] = (acc[item.department] || 0) + 1;
+    return acc;
+  }, {});
+
+  return {
+    org: {
+      totalActiveEmployees: employees.length,
+      attendanceRate,
+      totalRewards: rewards.length,
+      totalBonus,
+      rewardsByType,
+      departmentBreakdown,
+      topPerformers: topPerformances.map((item) => ({
+        name: `${item.employeeId?.firstName || ''} ${item.employeeId?.lastName || ''}`.trim(),
+        department: item.employeeId?.department || 'N/A',
+        score: item.overallPerformance || 0,
+      })),
+    },
+  };
+};
+
+const extractJsonObject = (text) => {
+  if (!text || typeof text !== 'string') return null;
+
+  const direct = text.trim();
+  try {
+    return JSON.parse(direct);
+  } catch {
+    // continue
+  }
+
+  const startIdx = direct.indexOf('{');
+  const endIdx = direct.lastIndexOf('}');
+  if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) {
+    return null;
+  }
+
+  const slice = direct.slice(startIdx, endIdx + 1);
+  try {
+    return JSON.parse(slice);
+  } catch {
+    return null;
+  }
+};
+
+const callAIText = async (prompt, fallbackText) => {
+  const apiKey = process.env.GENAI_API_KEY || process.env.GEMINI_API_KEY;
+  const model = process.env.GENAI_MODEL || 'gemini-2.5-flash';
+
+  if (!apiKey) {
+    return fallbackText;
+  }
+
+  try {
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      {
+        contents: [{ parts: [{ text: prompt }] }],
+      },
+      {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 30000,
+      }
+    );
+
+    const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    return text || fallbackText;
+  } catch (error) {
+    console.error('AI call failed:', error.message);
+    return fallbackText;
+  }
+};
+
+const defaultRecommendations = (context) => {
+  const metrics = context?.metrics || {};
+
+  return {
+    assessment: `Attendance is ${metrics.attendanceRate || 0}% and performance score is ${metrics.overallPerformance || 0}/5.`,
+    improvements: [
+      'Keep daily attendance consistency above 95%.',
+      'Focus on collaboration and timely delivery for next review cycle.',
+    ],
+    rewardEligibility: metrics.overallPerformance >= 4 && metrics.attendanceRate >= 90
+      ? 'Eligible for recognition this month.'
+      : 'Needs improvement before bonus recommendation.',
+    alerts: metrics.lateCount > 3 ? ['Frequent late arrivals detected this month.'] : [],
+    nextSteps: [
+      'Review monthly goals with manager.',
+      'Track progress weekly and update feedback notes.',
+    ],
+  };
+};
+
 export const getAIRecommendations = async (req, res, next) => {
   try {
     const { employeeId } = req.params;
 
-    const employee = await Employee.findById(employeeId);
-    if (!employee) {
+    if (!(await canAccessEmployee(req, employeeId))) {
+      return sendError(res, 'Not authorized to access this employee recommendations', 403);
+    }
+
+    const context = await buildEmployeeContext(employeeId);
+    if (!context) {
       return sendError(res, 'Employee not found', 404);
     }
 
-    // Gather data for analysis
-    const currentMonth = new Date();
-    const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-    const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+    const fallback = defaultRecommendations(context);
 
-    const attendance = await Attendance.find({
-      employeeId,
-      date: { $gte: startOfMonth, $lte: endOfMonth },
-    });
-
-    const performance = await Performance.findOne({ employeeId }).sort({
-      createdAt: -1,
-    });
-
-    const rewards = await Reward.find({ employeeId, approvalStatus: 'approved' });
-
-    const attendancePercentage =
-      attendance.length > 0
-        ? Math.round(
-            (attendance.filter((a) => a.status === 'present').length / attendance.length) * 100
-          )
-        : 0;
-
-    // Create AI prompt
     const prompt = `
-      Analyze the following employee data and provide insights and recommendations:
-      
-      Employee: ${employee.firstName} ${employee.lastName}
-      Department: ${employee.department}
-      Position: ${employee.position}
-      
-      Current Month Attendance: ${attendancePercentage}%
-      Performance Score: ${performance?.overallPerformance || 0}/5
-      Task Completion Rate: ${performance?.taskCompletionRate || 0}%
-      Team Collaboration: ${performance?.teamCollaborationScore || 0}/5
-      Total Rewards This Year: ${rewards.length}
-      
-      Based on this data, provide:
-      1. Performance assessment
-      2. Recommendations for improvement
-      3. Reward eligibility assessment
-      4. Any concerns or alerts
-      5. Suggested next steps for the manager
-      
-      Keep response concise and actionable.
+You are an HR performance assistant.
+Use this employee context and return JSON only with keys:
+assessment (string), improvements (string[]), rewardEligibility (string), alerts (string[]), nextSteps (string[]).
+
+Context:
+${JSON.stringify(context, null, 2)}
     `;
 
-    // Call Gemini API (this is a placeholder for actual implementation)
-    const recommendations = await callAIService(prompt);
+    const aiText = await callAIText(prompt, JSON.stringify(fallback));
+    const parsed = extractJsonObject(aiText);
 
-    return sendSuccess(res, { recommendations }, 'AI recommendations generated successfully', 200);
-  } catch (error) {
-    console.error('Get AI recommendations error:', error);
-    // Return mock recommendations if API fails
+    const recommendations = {
+      assessment: parsed?.assessment || fallback.assessment,
+      improvements: Array.isArray(parsed?.improvements) ? parsed.improvements : fallback.improvements,
+      rewardEligibility: parsed?.rewardEligibility || fallback.rewardEligibility,
+      alerts: Array.isArray(parsed?.alerts) ? parsed.alerts : fallback.alerts,
+      nextSteps: Array.isArray(parsed?.nextSteps) ? parsed.nextSteps : fallback.nextSteps,
+    };
+
     return sendSuccess(
       res,
-      {
-        recommendations: {
-          assessment: 'Employee showing consistent performance.',
-          improvements: ['Focus on team collaboration', 'Attend training programs'],
-          rewardEligibility: 'Eligible for bonus based on attendance',
-          alerts: [],
-          nextSteps: 'Schedule performance review with manager',
-        },
-      },
-      'Mock recommendations (API not configured)',
+      { recommendations, contextSummary: context.metrics },
+      'AI recommendations generated successfully',
       200
     );
+  } catch (error) {
+    console.error('Get AI recommendations error:', error);
+    next(error);
   }
 };
 
-// Get Burnout Risk Analysis
 export const getBurnoutAnalysis = async (req, res, next) => {
   try {
-    const month = new Date();
-    const startDate = new Date(month.getFullYear(), month.getMonth(), 1);
-    const endDate = new Date(month.getFullYear(), month.getMonth() + 1, 0);
-
+    const { start, end } = getMonthRange();
     const employees = await Employee.find({ status: 'active' });
 
     const burnoutRisks = [];
 
     for (const emp of employees) {
-      const attendance = await Attendance.find({
-        employeeId: emp._id,
-        date: { $gte: startDate, $lte: endDate },
-      });
+      const [attendance, performance] = await Promise.all([
+        Attendance.find({ employeeId: emp._id, date: { $gte: start, $lte: end } }),
+        Performance.findOne({ employeeId: emp._id }).sort({ createdAt: -1 }),
+      ]);
 
-      const performance = await Performance.findOne({ employeeId: emp._id }).sort({
-        createdAt: -1,
-      });
+      const attendanceRate = getAttendanceRate(attendance);
+      const lateCount = attendance.filter((item) => item.status === 'late').length;
 
-      const lateCount = attendance.filter((a) => a.status === 'late').length;
-      const attendancePercentage = attendance.length > 0 ? (attendance.filter((a) => a.status === 'present').length / attendance.length) * 100 : 0;
-
-      // Simple burnout risk calculation
       let riskScore = 0;
+      const indicators = [];
 
-      if (attendancePercentage < 80) riskScore += 20;
-      if (lateCount > 5) riskScore += 30;
-      if (performance && performance.overallPerformance < 2) riskScore += 25;
+      if (attendanceRate < 85) {
+        riskScore += 30;
+        indicators.push('Low attendance');
+      }
 
-      if (riskScore > 50) {
+      if (lateCount >= 4) {
+        riskScore += 25;
+        indicators.push('Frequent late arrivals');
+      }
+
+      if ((performance?.overallPerformance || 0) < 3) {
+        riskScore += 30;
+        indicators.push('Low performance trend');
+      }
+
+      if (riskScore > 0) {
         burnoutRisks.push({
           employeeId: emp._id,
           name: `${emp.firstName} ${emp.lastName}`,
           riskScore,
-          riskLevel: riskScore > 70 ? 'High' : riskScore > 50 ? 'Medium' : 'Low',
-          indicators: [
-            attendancePercentage < 80 && 'Low attendance',
-            lateCount > 5 && 'Frequent late arrivals',
-            performance && performance.overallPerformance < 2 && 'Declining performance',
-          ].filter(Boolean),
+          riskLevel: riskScore >= 70 ? 'high' : riskScore >= 40 ? 'medium' : 'low',
+          reason: indicators.join(', ') || 'No major indicators',
         });
       }
     }
 
+    const sorted = burnoutRisks.sort((a, b) => b.riskScore - a.riskScore);
+
     return sendSuccess(
       res,
-      { burnoutRisks: burnoutRisks.sort((a, b) => b.riskScore - a.riskScore) },
+      {
+        employees: sorted,
+        burnoutRisks: sorted,
+        summary: `${sorted.length} employees with burnout risk indicators this month.`,
+      },
       'Burnout risk analysis completed successfully',
       200
     );
@@ -147,84 +310,156 @@ export const getBurnoutAnalysis = async (req, res, next) => {
   }
 };
 
-// Get Reward Fairness Analysis
 export const getRewardFairnessAnalysis = async (req, res, next) => {
   try {
     const { month } = req.query;
-
     const query = { approvalStatus: 'approved' };
+
     if (month) {
       query.month = month;
     }
 
-    const rewards = await Reward.find(query).populate('employeeId');
+    const [rewards, employees] = await Promise.all([
+      Reward.find(query),
+      Employee.find({ status: 'active' }),
+    ]);
 
-    // Analyze reward distribution
-    const employees = await Employee.find({ status: 'active' });
-    const employeeRewards = {};
+    if (!employees.length) {
+      return sendSuccess(
+        res,
+        {
+          totalRewards: 0,
+          averageRewardsPerEmployee: 0,
+          anomalies: [],
+          summary: 'No employees found for fairness analysis.',
+        },
+        'Reward fairness analysis completed successfully',
+        200
+      );
+    }
 
-    employees.forEach((emp) => {
-      employeeRewards[emp._id] = { name: `${emp.firstName} ${emp.lastName}`, rewards: 0 };
-    });
+    const rewardCountByEmployee = new Map();
 
-    rewards.forEach((r) => {
-      if (employeeRewards[r.employeeId]) {
-        employeeRewards[r.employeeId].rewards += 1;
-      }
-    });
+    for (const emp of employees) {
+      rewardCountByEmployee.set(emp._id.toString(), {
+        employeeId: emp._id.toString(),
+        employeeName: `${emp.firstName} ${emp.lastName}`,
+        rewardPoints: 0,
+      });
+    }
 
-    const avgRewards = Object.values(employeeRewards).reduce((sum, emp) => sum + emp.rewards, 0) / Object.keys(employeeRewards).length;
+    for (const reward of rewards) {
+      const key = reward.employeeId.toString();
+      if (!rewardCountByEmployee.has(key)) continue;
+      const row = rewardCountByEmployee.get(key);
+      row.rewardPoints += 1;
+      rewardCountByEmployee.set(key, row);
+    }
 
-    const fairnessAnalysis = {
-      totalRewards: rewards.length,
-      averageRewardsPerEmployee: Math.round(avgRewards * 100) / 100,
-      distribution: Object.values(employeeRewards).sort((a, b) => b.rewards - a.rewards).slice(0, 10),
-      anomalies: Object.entries(employeeRewards)
-        .filter(([_, emp]) => emp.rewards > avgRewards * 2)
-        .map(([id, emp]) => ({
-          employeeId: id,
-          name: emp.name,
-          rewards: emp.rewards,
-          deviation: Math.round(((emp.rewards - avgRewards) / avgRewards) * 100),
-        })),
-    };
+    const rows = Array.from(rewardCountByEmployee.values());
+    const avg = rows.reduce((sum, row) => sum + row.rewardPoints, 0) / rows.length;
 
-    return sendSuccess(res, fairnessAnalysis, 'Reward fairness analysis completed successfully', 200);
+    const anomalies = rows
+      .filter((row) => row.rewardPoints > avg * 2 && avg > 0)
+      .map((row) => ({
+        employeeId: row.employeeId,
+        employeeName: row.employeeName,
+        rewardPoints: row.rewardPoints,
+        average: safeRound(avg, 2),
+        percentage: safeRound(((row.rewardPoints - avg) / avg) * 100, 1),
+      }))
+      .sort((a, b) => b.rewardPoints - a.rewardPoints);
+
+    const summary = anomalies.length
+      ? `${anomalies.length} potential outliers found in reward distribution.`
+      : 'Reward distribution looks balanced for the selected period.';
+
+    return sendSuccess(
+      res,
+      {
+        totalRewards: rewards.length,
+        averageRewardsPerEmployee: safeRound(avg, 2),
+        distribution: rows.sort((a, b) => b.rewardPoints - a.rewardPoints).slice(0, 10),
+        anomalies,
+        summary,
+      },
+      'Reward fairness analysis completed successfully',
+      200
+    );
   } catch (error) {
     console.error('Get fairness analysis error:', error);
     next(error);
   }
 };
 
-// Call AI Service (Placeholder for Gemini API)
-const callAIService = async (prompt) => {
+export const chatWithAI = async (req, res, next) => {
   try {
-    // This is where you would call the actual Gemini API
-    // For now, return mock recommendations
+    const { message, employeeId } = req.body;
 
-    if (!process.env.GEMINI_API_KEY) {
-      return {
-        assessment: 'Employee showing consistent performance.',
-        improvements: ['Focus on team collaboration', 'Attend training programs'],
-        rewardEligibility: 'Eligible for bonus based on performance',
-        alerts: [],
-        nextSteps: 'Schedule performance review with manager',
-      };
+    if (!message || typeof message !== 'string' || !message.trim()) {
+      return sendError(res, 'Message is required', 400);
     }
 
-    // Example API call (uncomment and configure as needed)
-    // const response = await axios.post(
-    //   `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
-    //   {
-    //     contents: [{ parts: [{ text: prompt }] }],
-    //   }
-    // );
-    // return response.data.candidates[0].content.parts[0].text;
+    let scope = 'organization';
+    let context;
 
-    return {};
+    if (req.userRole === 'employee') {
+      const myEmployee = await getEmployeeFromUser(req.userId);
+      if (!myEmployee) {
+        return sendError(res, 'Employee profile not found', 404);
+      }
+      context = await buildEmployeeContext(myEmployee._id);
+      scope = 'employee';
+    } else if (employeeId) {
+      context = await buildEmployeeContext(employeeId);
+      scope = 'employee';
+    } else {
+      context = await buildOrgContext();
+      scope = 'organization';
+    }
+
+    if (!context) {
+      return sendError(res, 'Context data not found for chat', 404);
+    }
+
+    const fallbackReply = scope === 'employee'
+      ? `Summary:\n- Attendance: ${context.metrics?.attendanceRate || 0}%\n- Performance score: ${context.metrics?.overallPerformance || 0}/5\n- Rewards: ${context.metrics?.rewardCount || 0}\n\nDetailed analysis:\n- Strong area: current reward and feedback trends are stable.\n- Risk area: improve attendance consistency and reduce late arrivals.\n\nAction plan:\n1. Weekly goal review with manager.\n2. Track attendance and delivery cadence every Friday.\n3. Reassess for reward eligibility at month end.`
+      : `Summary:\n- Active employees: ${context.org?.totalActiveEmployees || 0}\n- Attendance: ${context.org?.attendanceRate || 0}%\n- Total rewards: ${context.org?.totalRewards || 0}\n\nDetailed analysis:\n- Use department breakdown to compare staffing and performance pressure.\n- Review top performers and reward distribution outliers together.\n\nAction plan:\n1. Run monthly department-level performance calibration.\n2. Audit reward fairness exceptions.\n3. Start targeted coaching plans for risk groups.`;
+
+    const prompt = `
+You are an HR analytics assistant.
+Give a detailed answer using this structure:
+1) Summary
+2) What the data indicates
+3) Risks or anomalies
+4) Recommended actions (with priority)
+5) What to monitor next
+Use clear bullet points and reference exact values from context where possible.
+Role asking: ${req.userRole}
+Scope: ${scope}
+
+App context:
+${JSON.stringify(context, null, 2)}
+
+User question:
+${message}
+    `;
+
+    const reply = await callAIText(prompt, fallbackReply);
+
+    return sendSuccess(
+      res,
+      {
+        reply,
+        scope,
+        contextSummary: scope === 'employee' ? context.metrics : context.org,
+      },
+      'AI chat response generated successfully',
+      200
+    );
   } catch (error) {
-    console.error('AI Service error:', error);
-    return {};
+    console.error('AI chat error:', error);
+    next(error);
   }
 };
 
@@ -232,4 +467,5 @@ export default {
   getAIRecommendations,
   getBurnoutAnalysis,
   getRewardFairnessAnalysis,
+  chatWithAI,
 };

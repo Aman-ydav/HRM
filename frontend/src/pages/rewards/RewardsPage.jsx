@@ -1,19 +1,16 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { Card, Button, Badge, LoadingSpinner, Modal } from '../../components/ui'
 import { rewardService } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { Gift, Trophy } from 'lucide-react'
+import { normalizeRole, getDefaultRouteForRole } from '../../lib/auth'
 
 function RewardsPage() {
   const { user, employee } = useAuth()
-  const navigate = useNavigate()
-
-  // Redirect admin users - they should use admin reward management
-  if (user?.role === 'admin') {
-    navigate('/admin/rewards', { replace: true })
-    return null
-  }
+  const role = normalizeRole(user?.role)
+  const isEmployee = role === 'employee'
+  const fallbackRoute = getDefaultRouteForRole(user?.role)
 
   const employeeId = employee?._id
   const [activeTab, setActiveTab] = useState('rewards') // rewards, leaderboard, bonus
@@ -26,6 +23,10 @@ function RewardsPage() {
   const [selectedReward, setSelectedReward] = useState(null)
 
   useEffect(() => {
+    if (!isEmployee) {
+      return
+    }
+
     const fetchData = async () => {
       setLoading(true)
       setError('')
@@ -36,14 +37,14 @@ function RewardsPage() {
         }
 
         if (activeTab === 'rewards') {
-          const data = await rewardService.getRewards(employeeId)
-          setRewards(data.data || [])
+          const response = await rewardService.getRewards(employeeId)
+          setRewards(response?.data || [])
         } else if (activeTab === 'leaderboard') {
-          const data = await rewardService.getLeaderboard(50)
-          setLeaderboard(data.data || [])
+          const response = await rewardService.getLeaderboard(50)
+          setLeaderboard(response?.data || [])
         } else if (activeTab === 'bonus') {
-          const data = await rewardService.getBonusHistory(employeeId)
-          setBonusHistory(data.data || [])
+          const response = await rewardService.getBonusHistory(employeeId)
+          setBonusHistory(response?.data?.bonuses || [])
         }
       } catch (err) {
         setError(err.message || 'Failed to load rewards')
@@ -53,16 +54,10 @@ function RewardsPage() {
     }
 
     fetchData()
-  }, [activeTab, employeeId])
+  }, [activeTab, employeeId, isEmployee])
 
-  const getRewardColor = (type) => {
-    switch (type) {
-      case 'points': return 'orange'
-      case 'bonus': return 'green'
-      case 'badge': return 'yellow'
-      case 'employee_of_month': return 'orange'
-      default: return 'default'
-    }
+  if (!isEmployee) {
+    return <Navigate to={fallbackRoute} replace />
   }
 
   const getStatusColor = (status) => {
@@ -176,11 +171,11 @@ function RewardsPage() {
                           {idx + 1}
                         </div>
                         <div>
-                          <p className="font-medium text-white">{emp.firstName} {emp.lastName}</p>
-                          <p className="text-xs text-gray-400">{emp.employeeId}</p>
+                          <p className="font-medium text-white">{emp.name}</p>
+                          <p className="text-xs text-gray-400">{emp.department}</p>
                         </div>
                       </div>
-                      <Badge variant="orange">{emp.rewardPoints || 0} pts</Badge>
+                      <Badge variant="orange">{emp.totalPoints || 0} pts</Badge>
                     </div>
                   ))}
                 </div>
@@ -203,9 +198,9 @@ function RewardsPage() {
                           <p className="text-sm text-gray-400">{bonus.reason}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-xl font-bold text-green-400">${bonus.amount}</p>
+                          <p className="text-xl font-bold text-green-400">${bonus.bonus || 0}</p>
                           <Badge variant={getStatusColor(bonus.status)}>
-                            {bonus.status}
+                            {bonus.approvalStatus}
                           </Badge>
                         </div>
                       </div>

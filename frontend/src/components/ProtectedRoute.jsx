@@ -5,6 +5,15 @@ import { getDefaultRouteForRole, isRoleAllowed } from '../lib/auth'
 
 function ProtectedRoute({ children, requiredRole = null }) {
   const { isAuthenticated, user, loading } = useAuth()
+  const storedUser = (() => {
+    try {
+      const raw = localStorage.getItem('user')
+      return raw ? JSON.parse(raw) : null
+    } catch {
+      return null
+    }
+  })()
+  const effectiveRole = user?.role || storedUser?.role
 
   if (loading) {
     return (
@@ -20,8 +29,8 @@ function ProtectedRoute({ children, requiredRole = null }) {
 
   if (requiredRole) {
     const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
-    if (!isRoleAllowed(user?.role, roles)) {
-      return <Navigate to={getDefaultRouteForRole(user?.role)} replace />
+    if (!isRoleAllowed(effectiveRole, roles)) {
+      return <Navigate to={getDefaultRouteForRole(effectiveRole)} replace />
     }
   }
 

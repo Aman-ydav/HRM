@@ -3,6 +3,7 @@
 
 import Feedback from '../models/Feedback.js';
 import Employee from '../models/Employee.js';
+import mongoose from 'mongoose';
 import { sendSuccess, sendError, sendPaginatedResponse } from '../utils/responseUtils.js';
 import { getPaginationParams } from '../utils/paginationUtils.js';
 import { sendFeedbackNotification } from '../utils/emailUtils.js';
@@ -20,14 +21,29 @@ export const submitFeedback = async (req, res, next) => {
       actionItems,
     } = req.body;
 
-    const receiver = await Employee.findById(receiverId);
+    let receiver = null;
+    if (mongoose.Types.ObjectId.isValid(receiverId)) {
+      receiver = await Employee.findById(receiverId);
+    }
+    if (!receiver) {
+      receiver = await Employee.findOne({ employeeId: receiverId });
+    }
     if (!receiver) {
       return sendError(res, 'Recipient not found', 404);
     }
 
+    const senderEmployee = await Employee.findOne({ userId: req.userId });
+    if (!senderEmployee) {
+      return sendError(res, 'Sender employee profile not found', 404);
+    }
+
+    if (senderEmployee._id.toString() === receiver._id.toString()) {
+      return sendError(res, 'You cannot submit feedback to yourself', 400);
+    }
+
     const feedback = new Feedback({
-      sender: req.userId,
-      receiver: receiverId,
+      sender: senderEmployee._id,
+      receiver: receiver._id,
       feedbackType,
       rating,
       comment,
@@ -63,6 +79,13 @@ export const getEmployeeFeedback = async (req, res, next) => {
     const employee = await Employee.findById(employeeId);
     if (!employee) {
       return sendError(res, 'Employee not found', 404);
+    }
+
+    if (req.userRole === 'employee') {
+      const userEmployee = await Employee.findOne({ userId: req.userId });
+      if (!userEmployee || userEmployee._id.toString() !== employeeId) {
+        return sendError(res, 'Not authorized to view other employees feedback', 403);
+      }
     }
 
     let query = { receiver: employeeId };
@@ -102,6 +125,13 @@ export const getFeedbackGiven = async (req, res, next) => {
       return sendError(res, 'Employee not found', 404);
     }
 
+    if (req.userRole === 'employee') {
+      const userEmployee = await Employee.findOne({ userId: req.userId });
+      if (!userEmployee || userEmployee._id.toString() !== employeeId) {
+        return sendError(res, 'Not authorized to view feedback for other employees', 403);
+      }
+    }
+
     const total = await Feedback.countDocuments({ sender: employeeId });
     const feedbacks = await Feedback.find({ sender: employeeId })
       .skip(skip)
@@ -134,10 +164,11 @@ export const deleteFeedback = async (req, res, next) => {
     }
 
     // Check if user is feedback sender or admin
-    if (
-      feedback.sender.toString() !== req.userId &&
-      req.userRole !== 'admin'
-    ) {
+    const senderEmployee = await Employee.findOne({ userId: req.userId });
+    const canDeleteOwnFeedback =
+      senderEmployee && feedback.sender.toString() === senderEmployee._id.toString();
+
+    if (!canDeleteOwnFeedback && req.userRole !== 'admin') {
       return sendError(res, 'Not authorized to delete this feedback', 403);
     }
 
@@ -158,6 +189,13 @@ export const getFeedbackAnalytics = async (req, res, next) => {
     const employee = await Employee.findById(employeeId);
     if (!employee) {
       return sendError(res, 'Employee not found', 404);
+    }
+
+    if (req.userRole === 'employee') {
+      const userEmployee = await Employee.findOne({ userId: req.userId });
+      if (!userEmployee || userEmployee._id.toString() !== employeeId) {
+        return sendError(res, 'Not authorized to view analytics for other employees', 403);
+      }
     }
 
     const feedbacks = await Feedback.find({ receiver: employeeId });

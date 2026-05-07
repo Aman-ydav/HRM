@@ -1,19 +1,16 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Card, Button, LoadingSpinner, Badge } from '../../components/ui'
+import { Navigate } from 'react-router-dom'
+import { Card, LoadingSpinner, Badge } from '../../components/ui'
 import { attendanceService } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { Calendar, TrendingUp } from 'lucide-react'
+import { normalizeRole, getDefaultRouteForRole } from '../../lib/auth'
 
 function AttendancePage() {
   const { user, employee } = useAuth()
-  const navigate = useNavigate()
-
-  // Redirect admin users - they don't have personal attendance
-  if (user?.role === 'admin') {
-    navigate('/admin/dashboard', { replace: true })
-    return null
-  }
+  const role = normalizeRole(user?.role)
+  const isEmployee = role === 'employee'
+  const fallbackRoute = getDefaultRouteForRole(user?.role)
 
   const employeeId = employee?._id
   const [activeTab, setActiveTab] = useState('history') // history, monthly, analytics
@@ -25,6 +22,10 @@ function AttendancePage() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
 
   useEffect(() => {
+    if (!isEmployee) {
+      return
+    }
+
     const fetchData = async () => {
       setLoading(true)
       setError('')
@@ -35,15 +36,15 @@ function AttendancePage() {
         }
 
         if (activeTab === 'history') {
-          const data = await attendanceService.getHistory(employeeId, 1, 50)
-          setHistory(data.data || [])
+          const response = await attendanceService.getHistory(employeeId, 1, 50)
+          setHistory(response?.data || [])
         } else if (activeTab === 'monthly') {
           const [year, month] = selectedMonth.split('-')
-          const data = await attendanceService.getMonthlyReport(employeeId, parseInt(month), parseInt(year))
-          setMonthlyReport(data)
+          const response = await attendanceService.getMonthlyReport(employeeId, parseInt(month), parseInt(year))
+          setMonthlyReport(response?.data || null)
         } else if (activeTab === 'analytics') {
-          const data = await attendanceService.getAnalytics(employeeId, 12)
-          setAnalytics(data)
+          const response = await attendanceService.getAnalytics(employeeId, 12)
+          setAnalytics(response?.data || null)
         }
       } catch (err) {
         setError(err.message || 'Failed to load attendance data')
@@ -53,7 +54,11 @@ function AttendancePage() {
     }
 
     fetchData()
-  }, [activeTab, selectedMonth, employeeId])
+  }, [activeTab, selectedMonth, employeeId, isEmployee])
+
+  if (!isEmployee) {
+    return <Navigate to={fallbackRoute} replace />
+  }
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -156,19 +161,19 @@ function AttendancePage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="p-4 bg-gray-800 rounded">
                     <p className="text-gray-400 text-sm">Total Days</p>
-                    <p className="text-2xl font-bold text-orange-500">{monthlyReport.totalDays || 0}</p>
+                    <p className="text-2xl font-bold text-orange-500">{monthlyReport.total || 0}</p>
                   </div>
                   <div className="p-4 bg-gray-800 rounded">
                     <p className="text-gray-400 text-sm">Present</p>
-                    <p className="text-2xl font-bold text-green-400">{monthlyReport.presentDays || 0}</p>
+                    <p className="text-2xl font-bold text-green-400">{monthlyReport.present || 0}</p>
                   </div>
                   <div className="p-4 bg-gray-800 rounded">
                     <p className="text-gray-400 text-sm">Absent</p>
-                    <p className="text-2xl font-bold text-red-400">{monthlyReport.absentDays || 0}</p>
+                    <p className="text-2xl font-bold text-red-400">{monthlyReport.absent || 0}</p>
                   </div>
                   <div className="p-4 bg-gray-800 rounded">
                     <p className="text-gray-400 text-sm">Late</p>
-                    <p className="text-2xl font-bold text-yellow-400">{monthlyReport.lateDays || 0}</p>
+                    <p className="text-2xl font-bold text-yellow-400">{monthlyReport.late || 0}</p>
                   </div>
                 </div>
 
@@ -177,10 +182,10 @@ function AttendancePage() {
                   <div className="w-full bg-gray-700 rounded-full h-3">
                     <div
                       className="bg-orange-500 h-3 rounded-full transition-all"
-                      style={{ width: `${monthlyReport.attendancePercentage || 0}%` }}
+                      style={{ width: `${monthlyReport.percentage || 0}%` }}
                     ></div>
                   </div>
-                  <p className="text-orange-400 font-bold mt-2">{monthlyReport.attendancePercentage?.toFixed(1) || 0}%</p>
+                  <p className="text-orange-400 font-bold mt-2">{monthlyReport.percentage?.toFixed(1) || 0}%</p>
                 </div>
               </Card>
             </div>
@@ -199,31 +204,37 @@ function AttendancePage() {
                   <div className="p-4 bg-gray-800 rounded">
                     <p className="text-gray-400 text-sm">Avg Daily Hours</p>
                     <p className="text-2xl font-bold text-orange-500">
-                      {analytics.averageDailyHours?.toFixed(1) || 0}
+                      {analytics.averageWorkingHours?.toFixed(1) || 0}
                     </p>
                   </div>
                   <div className="p-4 bg-gray-800 rounded">
                     <p className="text-gray-400 text-sm">Avg Attendance</p>
                     <p className="text-2xl font-bold text-green-500">
-                      {analytics.averageAttendance?.toFixed(1) || 0}%
+                      {analytics.attendancePercentage?.toFixed(1) || 0}%
                     </p>
                   </div>
                   <div className="p-4 bg-gray-800 rounded">
                     <p className="text-gray-400 text-sm">Late Arrivals</p>
-                    <p className="text-2xl font-bold text-yellow-500">{analytics.lateArrivals || 0}</p>
+                    <p className="text-2xl font-bold text-yellow-500">{analytics.lateCount || 0}</p>
                   </div>
                 </div>
 
-                {analytics.monthlyBreakdown && (
+                {analytics.totalRecords !== undefined && (
                   <div className="mt-6">
-                    <h4 className="font-medium text-white mb-3">Monthly Breakdown</h4>
-                    <div className="space-y-2">
-                      {Object.entries(analytics.monthlyBreakdown).map(([month, data]) => (
-                        <div key={month} className="flex justify-between text-sm p-2 hover:bg-gray-800 rounded">
-                          <span className="text-gray-400">{month}</span>
-                          <span className="text-orange-400">{data.percentage?.toFixed(1)}%</span>
-                        </div>
-                      ))}
+                    <h4 className="font-medium text-white mb-3">Summary</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between p-2 hover:bg-gray-800 rounded">
+                        <span className="text-gray-400">Total Records</span>
+                        <span className="text-orange-400">{analytics.totalRecords}</span>
+                      </div>
+                      <div className="flex justify-between p-2 hover:bg-gray-800 rounded">
+                        <span className="text-gray-400">Present</span>
+                        <span className="text-green-400">{analytics.presentCount || 0}</span>
+                      </div>
+                      <div className="flex justify-between p-2 hover:bg-gray-800 rounded">
+                        <span className="text-gray-400">Absent</span>
+                        <span className="text-red-400">{analytics.absentCount || 0}</span>
+                      </div>
                     </div>
                   </div>
                 )}

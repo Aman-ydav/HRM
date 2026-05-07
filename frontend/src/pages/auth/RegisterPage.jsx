@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
-import { Button, Input, Select, LoadingSpinner } from '../../components/ui'
+import { Button, Input, LoadingSpinner } from '../../components/ui'
+import { getDefaultRouteForRole } from '../../lib/auth'
 
 function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -59,7 +60,7 @@ function RegisterPage() {
     })
 
     if (result.success) {
-      navigate('/dashboard')
+      navigate(getDefaultRouteForRole(result.user?.role))
     } else {
       setError(result.error || 'Registration failed')
     }

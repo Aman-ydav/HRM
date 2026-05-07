@@ -1,43 +1,46 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { Clock, Gift, TrendingUp, MessageSquare, AlertCircle, CheckCircle } from 'lucide-react'
 import { Card, Button, Badge, LoadingSpinner } from '../../components/ui'
-import { employeeService, attendanceService, rewardService } from '../../lib/api'
+import { employeeService, attendanceService } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
+import { normalizeRole, getDefaultRouteForRole } from '../../lib/auth'
 
 function EmployeeDashboard() {
-  const { user } = useAuth()
-  const navigate = useNavigate()
+  const { user, employee } = useAuth()
+  const role = normalizeRole(user?.role)
+  const isEmployee = role === 'employee'
+  const fallbackRoute = getDefaultRouteForRole(user?.role)
 
-  // Redirect admin users to admin dashboard
-  if (user?.role === 'admin') {
-    navigate('/admin/dashboard', { replace: true })
-    return null
-  }
   const [dashboard, setDashboard] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [checkInStatus, setCheckInStatus] = useState(null)
 
   useEffect(() => {
+    if (!isEmployee) {
+      return
+    }
+
     const fetchDashboard = async () => {
       try {
         const data = await employeeService.getDashboard()
-        setDashboard(data)
+        const payload = data?.data || data || {}
+        setDashboard(payload)
 
         // Check today's attendance status
-        if (data.attendance) {
+        if (employee?._id) {
+          const historyResponse = await attendanceService.getHistory(employee._id, 1, 31)
+          const history = historyResponse?.data || []
           const today = new Date().toISOString().split('T')[0]
-          const todayAttendance = data.attendance.find(a => 
-            new Date(a.date).toISOString().split('T')[0] === today
+          const todayAttendance = history.find(
+            (record) => new Date(record.date).toISOString().split('T')[0] === today
           )
-          if (todayAttendance) {
-            setCheckInStatus({
-              checkedIn: !!todayAttendance.checkInTime,
-              checkedOut: !!todayAttendance.checkOutTime,
-              status: todayAttendance.status,
-            })
-          }
+          setCheckInStatus({
+            checkedIn: !!todayAttendance?.checkInTime,
+            checkedOut: !!todayAttendance?.checkOutTime,
+            status: todayAttendance?.status || 'present',
+          })
         }
       } catch (err) {
         setError(err.message || 'Failed to load dashboard')
@@ -47,7 +50,11 @@ function EmployeeDashboard() {
     }
 
     fetchDashboard()
-  }, [])
+  }, [employee?._id, isEmployee])
+
+  if (!isEmployee) {
+    return <Navigate to={fallbackRoute} replace />
+  }
 
   const handleCheckIn = async () => {
     try {
@@ -134,19 +141,19 @@ function EmployeeDashboard() {
             {dashboard?.attendance && (
               <div className="flex justify-between items-center p-2 hover:bg-gray-800 rounded">
                 <span className="text-gray-400">Attendance This Month</span>
-                <Badge variant="orange">{dashboard.attendance.currentMonth}%</Badge>
+                <Badge variant="orange">{dashboard.attendance.percentage || 0}%</Badge>
               </div>
             )}
-            {dashboard?.rewards && (
+            {dashboard?.employee && (
               <div className="flex justify-between items-center p-2 hover:bg-gray-800 rounded">
                 <span className="text-gray-400">Reward Points</span>
-                <Badge variant="orange">{dashboard.rewards.totalPoints}</Badge>
+                <Badge variant="orange">{dashboard.employee.rewardPoints || 0}</Badge>
               </div>
             )}
-            {dashboard?.totalBonus && (
+            {dashboard?.employee && (
               <div className="flex justify-between items-center p-2 hover:bg-gray-800 rounded">
                 <span className="text-gray-400">Total Bonus</span>
-                <Badge variant="green">${dashboard.totalBonus}</Badge>
+                <Badge variant="green">${dashboard.employee.totalBonus || 0}</Badge>
               </div>
             )}
           </div>

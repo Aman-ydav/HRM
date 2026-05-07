@@ -1,6 +1,6 @@
 import React from 'react'
 
-export const Button = React.forwardRef(({ className, children, variant = 'primary', disabled, ...props }, ref) => {
+export const Button = React.forwardRef(({ className = '', children, variant = 'primary', disabled, ...props }, ref) => {
   const baseStyles = 'px-4 py-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
   const variants = {
     primary: 'bg-orange-500 text-white hover:bg-orange-600 active:scale-95',
@@ -21,7 +21,7 @@ export const Button = React.forwardRef(({ className, children, variant = 'primar
   )
 })
 
-export const Input = React.forwardRef(({ className, type = 'text', label, error, ...props }, ref) => (
+export const Input = React.forwardRef(({ className = '', type = 'text', label, error, ...props }, ref) => (
   <div className="w-full">
     {label && <label className="block text-sm font-medium text-gray-300 mb-2">{label}</label>}
     <input
@@ -34,7 +34,7 @@ export const Input = React.forwardRef(({ className, type = 'text', label, error,
   </div>
 ))
 
-export const Card = ({ className, children, ...props }) => (
+export const Card = ({ className = '', children, ...props }) => (
   <div className={`bg-gray-900 border border-gray-800 rounded-lg p-6 ${className}`} {...props}>
     {children}
   </div>
@@ -47,9 +47,11 @@ export const Badge = ({ children, variant = 'default', className = '' }) => {
     green: 'bg-green-500/20 text-green-400',
     red: 'bg-red-500/20 text-red-400',
     yellow: 'bg-yellow-500/20 text-yellow-400',
+    blue: 'bg-blue-500/20 text-blue-400',
   }
+
   return (
-    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${variants[variant]} ${className}`}>
+    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${variants[variant] || variants.default} ${className}`}>
       {children}
     </span>
   )
@@ -89,7 +91,7 @@ export const Modal = ({ open, onClose, title, children, footer }) => {
       <div className="bg-gray-900 border border-gray-800 rounded-lg max-w-md w-full mx-4">
         <div className="flex justify-between items-center p-6 border-b border-gray-800">
           <h2 className="text-lg font-bold text-white">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">×</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">X</button>
         </div>
         <div className="p-6">{children}</div>
         {footer && <div className="p-6 border-t border-gray-800 flex gap-3 justify-end">{footer}</div>}
@@ -104,5 +106,6 @@ export const LoadingSpinner = ({ size = 'md' }) => {
     md: 'w-8 h-8',
     lg: 'w-12 h-12',
   }
+
   return <div className={`${sizes[size]} border-4 border-orange-500 border-t-transparent rounded-full animate-spin`}></div>
 }

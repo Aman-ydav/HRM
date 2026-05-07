@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card, Button, LoadingSpinner, Badge } from '../../components/ui'
 import { attendanceService } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
@@ -6,6 +7,14 @@ import { Calendar, TrendingUp } from 'lucide-react'
 
 function AttendancePage() {
   const { user, employee } = useAuth()
+  const navigate = useNavigate()
+
+  // Redirect admin users - they don't have personal attendance
+  if (user?.role === 'admin') {
+    navigate('/admin/dashboard', { replace: true })
+    return null
+  }
+
   const employeeId = employee?._id
   const [activeTab, setActiveTab] = useState('history') // history, monthly, analytics
   const [history, setHistory] = useState([])

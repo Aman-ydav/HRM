@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card, Button, Badge, Input, Textarea, Modal, LoadingSpinner } from '../../components/ui'
 import { feedbackService } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { MessageSquare, Send } from 'lucide-react'
 
 function FeedbackPage() {
-  const { employee } = useAuth()
+  const { user, employee } = useAuth()
+  const navigate = useNavigate()
+
+  // Redirect admin users - they don't have personal feedback
+  if (user?.role === 'admin') {
+    navigate('/admin/dashboard', { replace: true })
+    return null
+  }
+
   const employeeId = employee?._id
   const [activeTab, setActiveTab] = useState('received')
   const [receivedFeedback, setReceivedFeedback] = useState([])

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Clock, Gift, TrendingUp, MessageSquare, AlertCircle, CheckCircle } from 'lucide-react'
 import { Card, Button, Badge, LoadingSpinner } from '../../components/ui'
 import { employeeService, attendanceService, rewardService } from '../../lib/api'
@@ -6,6 +7,13 @@ import { useAuth } from '../../contexts/AuthContext'
 
 function EmployeeDashboard() {
   const { user } = useAuth()
+  const navigate = useNavigate()
+
+  // Redirect admin users to admin dashboard
+  if (user?.role === 'admin') {
+    navigate('/admin/dashboard', { replace: true })
+    return null
+  }
   const [dashboard, setDashboard] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')

@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card, Button, Badge, LoadingSpinner } from '../../components/ui'
 import { performanceService } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { TrendingUp, BarChart3 } from 'lucide-react'
 
 function PerformancePage() {
-  const { employee } = useAuth()
+  const { user, employee } = useAuth()
+  const navigate = useNavigate()
+
+  // Redirect admin users - they should use admin dashboard
+  if (user?.role === 'admin') {
+    navigate('/admin/dashboard', { replace: true })
+    return null
+  }
+
   const employeeId = employee?._id
   const [activeTab, setActiveTab] = useState('history')
   const [reviews, setReviews] = useState([])

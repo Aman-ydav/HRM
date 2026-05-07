@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card, Button, Badge, LoadingSpinner, Modal } from '../../components/ui'
 import { rewardService } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
@@ -6,6 +7,14 @@ import { Gift, Trophy } from 'lucide-react'
 
 function RewardsPage() {
   const { user, employee } = useAuth()
+  const navigate = useNavigate()
+
+  // Redirect admin users - they should use admin reward management
+  if (user?.role === 'admin') {
+    navigate('/admin/rewards', { replace: true })
+    return null
+  }
+
   const employeeId = employee?._id
   const [activeTab, setActiveTab] = useState('rewards') // rewards, leaderboard, bonus
   const [rewards, setRewards] = useState([])

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card, Badge, LoadingSpinner } from '../../components/ui'
 import { aiService } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
@@ -6,6 +7,14 @@ import { Zap, AlertTriangle, TrendingDown, Lightbulb } from 'lucide-react'
 
 function AIRecommendationsPage() {
   const { employee, user } = useAuth()
+  const navigate = useNavigate()
+
+  // Redirect admin users - they should use admin dashboard for insights
+  if (user?.role === 'admin') {
+    navigate('/admin/dashboard', { replace: true })
+    return null
+  }
+
   const employeeId = employee?._id
   const [recommendations, setRecommendations] = useState(null)
   const [burnoutAnalysis, setBurnoutAnalysis] = useState(null)

@@ -16,17 +16,24 @@ function DashboardLayout() {
 
   const isAdmin = user?.role === 'admin'
   const isHR = user?.role === 'hr_manager'
+  const isEmployee = user?.role === 'employee'
 
+  // Menu items specific to each role
   const menuItems = [
-    { icon: Home, label: 'Dashboard', path: '/dashboard', show: true },
-    { icon: Clock, label: 'Attendance', path: '/attendance', show: true },
-    { icon: Gift, label: 'Rewards', path: '/rewards', show: true },
-    { icon: BarChart3, label: 'Performance', path: '/performance', show: true },
-    { icon: MessageSquare, label: 'Feedback', path: '/feedback', show: true },
-    { icon: Zap, label: 'AI Insights', path: '/ai-insights', show: true },
+    // Common items for all
+    { icon: Home, label: 'Dashboard', path: '/dashboard', show: !isAdmin }, // Employees don't see employee dashboard if admin
+    
+    // Employee-only items (not shown to admin/hr)
+    { icon: Clock, label: 'Attendance', path: '/attendance', show: isEmployee },
+    { icon: Gift, label: 'Rewards', path: '/rewards', show: isEmployee },
+    { icon: BarChart3, label: 'Performance', path: '/performance', show: isEmployee },
+    { icon: MessageSquare, label: 'Feedback', path: '/feedback', show: isEmployee },
+    { icon: Zap, label: 'AI Insights', path: '/ai-insights', show: isEmployee },
+    
+    // Admin-specific items
+    { icon: Home, label: 'Admin Dashboard', path: '/admin/dashboard', show: isAdmin },
     { icon: Users, label: 'Employees', path: '/admin/employees', show: isAdmin },
     { icon: Gift, label: 'Manage Rewards', path: '/admin/rewards', show: isAdmin || isHR },
-    { icon: BarChart3, label: 'Admin Dashboard', path: '/admin/dashboard', show: isAdmin },
   ]
 
   return (

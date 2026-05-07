@@ -14,14 +14,19 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 const validateEnvironment = () => {
   const requiredVars = [
     'MONGODB_URI',
-    'JWT_SECRET',
     'BCRYPT_ROUNDS',
   ];
 
+  const tokenSecret = process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET;
+  if (!tokenSecret) {
+    requiredVars.push('ACCESS_TOKEN_SECRET');
+  }
+
   const recommendedVars = [
-    'CORS_ORIGIN',
-    'EMAIL_USER',
-    'EMAIL_PASSWORD',
+    'CORS_ALLOWED_ORIGINS',
+    'BREVO_API_KEY',
+    'SMTP_FROM_EMAIL',
+    'GENAI_API_KEY',
   ];
 
   const missingRequired = [];
@@ -59,10 +64,10 @@ const validateEnvironment = () => {
   }
 
   // CORS security check
-  if (!process.env.CORS_ORIGIN) {
-    console.warn('\n⚠️  WARNING: CORS_ORIGIN not configured. Requests may be blocked.');
+  if (!process.env.CORS_ALLOWED_ORIGINS && !process.env.CORS_ORIGIN) {
+    console.warn('\n⚠️  WARNING: CORS_ALLOWED_ORIGINS not configured. Requests may be blocked.');
     if (NODE_ENV === 'production') {
-      console.error('❌ In production, CORS_ORIGIN must be explicitly configured for security.');
+      console.error('❌ In production, CORS_ALLOWED_ORIGINS must be explicitly configured for security.');
       process.exit(1);
     }
   }
@@ -168,5 +173,3 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   process.exit(1);
 });
-
-export default server;

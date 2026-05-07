@@ -2,8 +2,8 @@
 // JWT Configuration
 
 export const JWT_CONFIG = {
-  secret: process.env.JWT_SECRET || 'your_secret_key',
-  expiresIn: process.env.JWT_EXPIRE || '7d',
+  secret: process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET || 'your_secret_key',
+  expiresIn: process.env.ACCESS_TOKEN_EXPIRY || process.env.JWT_EXPIRE || '7d',
   algorithm: 'HS256',
 };
 

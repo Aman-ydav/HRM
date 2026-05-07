@@ -5,7 +5,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import { Calendar, TrendingUp } from 'lucide-react'
 
 function AttendancePage() {
-  const { user } = useAuth()
+  const { user, employee } = useAuth()
+  const employeeId = employee?._id
   const [activeTab, setActiveTab] = useState('history') // history, monthly, analytics
   const [history, setHistory] = useState([])
   const [monthlyReport, setMonthlyReport] = useState(null)
@@ -19,15 +20,20 @@ function AttendancePage() {
       setLoading(true)
       setError('')
       try {
+        if (!employeeId) {
+          setError('Employee profile is not available for this account')
+          return
+        }
+
         if (activeTab === 'history') {
-          const data = await attendanceService.getHistory(user?._id, 1, 50)
+          const data = await attendanceService.getHistory(employeeId, 1, 50)
           setHistory(data.data || [])
         } else if (activeTab === 'monthly') {
           const [year, month] = selectedMonth.split('-')
-          const data = await attendanceService.getMonthlyReport(user?._id, parseInt(month), parseInt(year))
+          const data = await attendanceService.getMonthlyReport(employeeId, parseInt(month), parseInt(year))
           setMonthlyReport(data)
         } else if (activeTab === 'analytics') {
-          const data = await attendanceService.getAnalytics(user?._id, 12)
+          const data = await attendanceService.getAnalytics(employeeId, 12)
           setAnalytics(data)
         }
       } catch (err) {
@@ -38,7 +44,7 @@ function AttendancePage() {
     }
 
     fetchData()
-  }, [activeTab, selectedMonth, user?._id])
+  }, [activeTab, selectedMonth, employeeId])
 
   const getStatusColor = (status) => {
     switch (status) {

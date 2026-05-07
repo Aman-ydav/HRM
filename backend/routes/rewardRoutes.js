@@ -6,6 +6,7 @@ import {
   assignReward,
   approveReward,
   getRewards,
+  getAllRewards,
   getRewardLeaderboard,
   getBonusHistory,
   getRewardsByType,
@@ -22,6 +23,7 @@ router.post('/assign', authorize('admin', 'hr_manager'), assignReward);
 router.put('/approve/:id', authorize('admin'), approveReward);
 
 // Get routes
+router.get('/all', authorize('admin', 'hr_manager'), getAllRewards);
 router.get('/employee/:employeeId', getRewards);
 router.get('/leaderboard', getRewardLeaderboard);
 router.get('/bonus-history/:employeeId', getBonusHistory);

@@ -5,7 +5,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import { Zap, AlertTriangle, TrendingDown, Lightbulb } from 'lucide-react'
 
 function AIRecommendationsPage() {
-  const { user } = useAuth()
+  const { employee, user } = useAuth()
+  const employeeId = employee?._id
   const [recommendations, setRecommendations] = useState(null)
   const [burnoutAnalysis, setBurnoutAnalysis] = useState(null)
   const [fairnessAnalysis, setFairnessAnalysis] = useState(null)
@@ -17,11 +18,18 @@ function AIRecommendationsPage() {
       setLoading(true)
       setError('')
       try {
+        if (!employeeId && user?.role !== 'admin') {
+          setError('Employee profile is not available for this account')
+          return
+        }
+
         const [rec, burnout, fairness] = await Promise.all([
-          aiService.getRecommendations(user?._id).catch(err => {
+          employeeId
+            ? aiService.getRecommendations(employeeId).catch(err => {
             console.warn('Recommendations error:', err)
             return null
-          }),
+            })
+            : Promise.resolve(null),
           aiService.getBurnoutAnalysis().catch(err => {
             console.warn('Burnout analysis error:', err)
             return null
@@ -43,7 +51,7 @@ function AIRecommendationsPage() {
     }
 
     fetchAIData()
-  }, [user?._id])
+  }, [employeeId, user?.role])
 
   const getRiskColor = (level) => {
     switch (level?.toLowerCase()) {

@@ -5,7 +5,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import { TrendingUp, BarChart3 } from 'lucide-react'
 
 function PerformancePage() {
-  const { user } = useAuth()
+  const { employee } = useAuth()
+  const employeeId = employee?._id
   const [activeTab, setActiveTab] = useState('history')
   const [reviews, setReviews] = useState([])
   const [analytics, setAnalytics] = useState(null)
@@ -18,11 +19,16 @@ function PerformancePage() {
       setLoading(true)
       setError('')
       try {
+        if (!employeeId) {
+          setError('Employee profile is not available for this account')
+          return
+        }
+
         if (activeTab === 'history') {
-          const data = await performanceService.getHistory(user?._id, 1, 20)
+          const data = await performanceService.getHistory(employeeId, 1, 20)
           setReviews(data.data || [])
         } else if (activeTab === 'analytics') {
-          const data = await performanceService.getAnalytics(user?._id)
+          const data = await performanceService.getAnalytics(employeeId)
           setAnalytics(data)
         } else if (activeTab === 'top') {
           const data = await performanceService.getTopPerformers(10)
@@ -36,7 +42,7 @@ function PerformancePage() {
     }
 
     fetchData()
-  }, [activeTab, user?._id])
+  }, [activeTab, employeeId])
 
   return (
     <div className="space-y-6">

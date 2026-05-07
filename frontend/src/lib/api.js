@@ -86,6 +86,8 @@ export const rewardService = {
   assignReward: (data) => apiClient.post('/rewards/assign', data),
   approveReward: (id, status, reason) =>
     apiClient.put(`/rewards/approve/${id}`, { approvalStatus: status, reason }),
+  getAllRewards: (page = 1, limit = 20, status = '', month = '', rewardType = '', search = '') =>
+    apiClient.get('/rewards/all', { params: { page, limit, status, month, rewardType, search } }),
   getRewards: (employeeId, status = '', month = '') =>
     apiClient.get(`/rewards/employee/${employeeId}`, { params: { status, month } }),
   getLeaderboard: (limit = 20) =>

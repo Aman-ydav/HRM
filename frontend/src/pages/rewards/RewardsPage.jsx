@@ -5,7 +5,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import { Gift, Trophy } from 'lucide-react'
 
 function RewardsPage() {
-  const { user } = useAuth()
+  const { user, employee } = useAuth()
+  const employeeId = employee?._id
   const [activeTab, setActiveTab] = useState('rewards') // rewards, leaderboard, bonus
   const [rewards, setRewards] = useState([])
   const [leaderboard, setLeaderboard] = useState([])
@@ -20,14 +21,19 @@ function RewardsPage() {
       setLoading(true)
       setError('')
       try {
+        if (!employeeId) {
+          setError('Employee profile is not available for this account')
+          return
+        }
+
         if (activeTab === 'rewards') {
-          const data = await rewardService.getRewards(user?._id)
+          const data = await rewardService.getRewards(employeeId)
           setRewards(data.data || [])
         } else if (activeTab === 'leaderboard') {
           const data = await rewardService.getLeaderboard(50)
           setLeaderboard(data.data || [])
         } else if (activeTab === 'bonus') {
-          const data = await rewardService.getBonusHistory(user?._id)
+          const data = await rewardService.getBonusHistory(employeeId)
           setBonusHistory(data.data || [])
         }
       } catch (err) {
@@ -38,7 +44,7 @@ function RewardsPage() {
     }
 
     fetchData()
-  }, [activeTab, user?._id])
+  }, [activeTab, employeeId])
 
   const getRewardColor = (type) => {
     switch (type) {

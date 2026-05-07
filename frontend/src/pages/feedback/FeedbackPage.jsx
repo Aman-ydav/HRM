@@ -5,7 +5,8 @@ import { useAuth } from '../../contexts/AuthContext'
 import { MessageSquare, Send } from 'lucide-react'
 
 function FeedbackPage() {
-  const { user } = useAuth()
+  const { employee } = useAuth()
+  const employeeId = employee?._id
   const [activeTab, setActiveTab] = useState('received')
   const [receivedFeedback, setReceivedFeedback] = useState([])
   const [givenFeedback, setGivenFeedback] = useState([])
@@ -25,14 +26,19 @@ function FeedbackPage() {
       setLoading(true)
       setError('')
       try {
+        if (!employeeId) {
+          setError('Employee profile is not available for this account')
+          return
+        }
+
         if (activeTab === 'received') {
-          const data = await feedbackService.getReceived(user?._id, 1, 50)
+          const data = await feedbackService.getReceived(employeeId, 1, 50)
           setReceivedFeedback(data.data || [])
         } else if (activeTab === 'given') {
-          const data = await feedbackService.getGiven(user?._id, 1, 50)
+          const data = await feedbackService.getGiven(employeeId, 1, 50)
           setGivenFeedback(data.data || [])
         } else if (activeTab === 'analytics') {
-          const data = await feedbackService.getAnalytics(user?._id)
+          const data = await feedbackService.getAnalytics(employeeId)
           setAnalytics(data)
         }
       } catch (err) {
@@ -43,18 +49,18 @@ function FeedbackPage() {
     }
 
     fetchData()
-  }, [activeTab, user?._id])
+  }, [activeTab, employeeId])
 
   const handleSubmitFeedback = async () => {
     try {
       await feedbackService.submit({
         ...newFeedback,
-        senderId: user?._id,
+        senderId: employeeId,
       })
       setSubmitModalOpen(false)
       setNewFeedback({ receiverId: '', rating: 5, category: 'peer_review', comment: '' })
       // Refresh feedback
-      const data = await feedbackService.getGiven(user?._id, 1, 50)
+      const data = await feedbackService.getGiven(employeeId, 1, 50)
       setGivenFeedback(data.data || [])
     } catch (err) {
       setError(err.message || 'Failed to submit feedback')

@@ -24,13 +24,13 @@ function RewardManagement() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
+      setError('')
       try {
         // Fetch employees for dropdown
         const empData = await employeeService.getAllEmployees(1, 100)
         setEmployees(empData.data || [])
 
-        // Fetch rewards - would need to implement filter on backend
-        const rewardsData = await rewardService.getRewards('', '', '')
+        const rewardsData = await rewardService.getAllRewards(1, 100, '', '', '', '')
         setRewards(rewardsData.data || [])
       } catch (err) {
         setError(err.message || 'Failed to load data')
@@ -49,7 +49,7 @@ function RewardManagement() {
       setSelectedReward(null)
       setApprovalReason('')
       // Refresh rewards
-      const data = await rewardService.getRewards('', '', '')
+      const data = await rewardService.getAllRewards(1, 100, '', '', '', '')
       setRewards(data.data || [])
     } catch (err) {
       setError(err.message || 'Failed to approve reward')
@@ -67,7 +67,7 @@ function RewardManagement() {
         month: new Date().toISOString().slice(0, 7),
       })
       setNewRewardForm({ employeeId: '', rewardType: 'points', points: '', bonus: '', reason: '' })
-      const data = await rewardService.getRewards('', '', '')
+      const data = await rewardService.getAllRewards(1, 100, '', '', '', '')
       setRewards(data.data || [])
     } catch (err) {
       setError(err.message || 'Failed to assign reward')

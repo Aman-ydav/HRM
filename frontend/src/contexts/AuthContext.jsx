@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react'
-import { authService } from '../lib/api'
+import { authService, employeeService } from '../lib/api'
 
 const AuthContext = createContext()
 
 const initialState = {
   user: null,
+  employee: null,
   token: null,
   loading: true,
   error: null,
@@ -18,6 +19,7 @@ function authReducer(state, action) {
       return {
         ...state,
         user: action.payload.user,
+        employee: action.payload.employee || null,
         token: action.payload.token,
         loading: false,
         error: null,
@@ -26,6 +28,7 @@ function authReducer(state, action) {
       return {
         ...state,
         user: null,
+        employee: null,
         token: null,
         loading: false,
         error: null,
@@ -36,6 +39,7 @@ function authReducer(state, action) {
       return {
         ...state,
         user: action.payload.user,
+        employee: action.payload.employee || null,
         token: action.payload.token,
         loading: false,
       }
@@ -59,9 +63,20 @@ export function AuthProvider({ children }) {
           if (!parsedUser || parsedUser === 'undefined') {
             throw new Error('Invalid stored user')
           }
+
+          let employee = null
+          if (parsedUser?.role !== 'admin') {
+            try {
+              const profileResponse = await employeeService.getProfile()
+              employee = profileResponse?.data || profileResponse || null
+            } catch (profileError) {
+              console.warn('Failed to load employee profile:', profileError?.message || profileError)
+            }
+          }
+
           dispatch({
             type: 'RESTORE_TOKEN',
-            payload: { token, user: parsedUser },
+            payload: { token, user: parsedUser, employee },
           })
         } catch (err) {
           console.error('Failed to restore token:', err)
@@ -84,12 +99,22 @@ export function AuthProvider({ children }) {
       const authData = response?.data || response
       const { user, token } = authData
 
+      let employee = null
+      if (user?.role !== 'admin') {
+        try {
+          const profileResponse = await employeeService.getProfile()
+          employee = profileResponse?.data || profileResponse || null
+        } catch (profileError) {
+          console.warn('Failed to load employee profile:', profileError?.message || profileError)
+        }
+      }
+
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
 
       dispatch({
         type: 'LOGIN_SUCCESS',
-        payload: { user, token },
+        payload: { user, employee, token },
       })
 
       return { success: true }
@@ -107,12 +132,22 @@ export function AuthProvider({ children }) {
       const authData = response?.data || response
       const { user, token } = authData
 
+      let employee = null
+      if (user?.role !== 'admin') {
+        try {
+          const profileResponse = await employeeService.getProfile()
+          employee = profileResponse?.data || profileResponse || null
+        } catch (profileError) {
+          console.warn('Failed to load employee profile:', profileError?.message || profileError)
+        }
+      }
+
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
 
       dispatch({
         type: 'LOGIN_SUCCESS',
-        payload: { user, token },
+        payload: { user, employee, token },
       })
 
       return { success: true }

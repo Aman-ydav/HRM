@@ -97,8 +97,9 @@ function LoginPage() {
       {/* Demo credentials */}
       <div className="p-4 bg-gray-800/50 border border-gray-700 rounded-lg text-xs text-gray-400">
         <p className="font-medium text-white mb-2">Demo Credentials:</p>
-        <p>Admin: admin@hrm.com / Password123</p>
-        <p>Employee: john.doe@hrm.com / Password123</p>
+        <p>Admin: admin@hrm.com / admin123</p>
+        <p>HR Manager: hr@hrm.com / hr123</p>
+        <p>Employee: john.doe@hrm.com / john123</p>
       </div>
     </form>
   )

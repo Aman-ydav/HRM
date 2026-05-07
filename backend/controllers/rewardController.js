@@ -186,6 +186,65 @@ export const getRewards = async (req, res, next) => {
   }
 };
 
+// Get All Rewards for Admin/HR
+export const getAllRewards = async (req, res, next) => {
+  try {
+    const { page, limit, skip } = getPaginationParams(req.query);
+    const { month, status, rewardType, search } = req.query;
+
+    if (status && !['pending', 'approved', 'rejected'].includes(status)) {
+      return sendError(res, 'Invalid status. Must be pending, approved, or rejected', 400);
+    }
+
+    let query = {};
+
+    if (month) {
+      if (!/^\d{4}-\d{2}$/.test(month)) {
+        return sendError(res, 'Month must be in YYYY-MM format', 400);
+      }
+      query.month = month;
+    }
+
+    if (status) query.approvalStatus = status;
+    if (rewardType) query.rewardType = rewardType;
+
+    const rewards = await Reward.find(query)
+      .populate({
+        path: 'employeeId',
+        select: 'firstName lastName employeeId email department position status',
+      })
+      .populate('awardedBy', 'firstName lastName')
+      .populate('approvedBy', 'firstName lastName')
+      .sort({ createdAt: -1 });
+
+    let filteredRewards = rewards;
+
+    if (search) {
+      const searchText = search.toLowerCase();
+      filteredRewards = rewards.filter((reward) => {
+        const employeeName = `${reward.employeeId?.firstName || ''} ${reward.employeeId?.lastName || ''}`.toLowerCase();
+        const employeeEmail = (reward.employeeId?.email || '').toLowerCase();
+        const employeeId = (reward.employeeId?.employeeId || '').toLowerCase();
+        const reason = (reward.reason || '').toLowerCase();
+        return (
+          employeeName.includes(searchText) ||
+          employeeEmail.includes(searchText) ||
+          employeeId.includes(searchText) ||
+          reason.includes(searchText)
+        );
+      });
+    }
+
+    const total = filteredRewards.length;
+    const paginatedRewards = filteredRewards.slice(skip, skip + limit);
+
+    return sendPaginatedResponse(res, paginatedRewards, page, limit, total, 'All rewards fetched successfully');
+  } catch (error) {
+    console.error('Get all rewards error:', error);
+    next(error);
+  }
+};
+
 // Get Reward Leaderboard
 export const getRewardLeaderboard = async (req, res, next) => {
   try {

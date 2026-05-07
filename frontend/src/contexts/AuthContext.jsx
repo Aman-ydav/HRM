@@ -55,9 +55,13 @@ export function AuthProvider({ children }) {
 
       if (token && user) {
         try {
+          const parsedUser = JSON.parse(user)
+          if (!parsedUser || parsedUser === 'undefined') {
+            throw new Error('Invalid stored user')
+          }
           dispatch({
             type: 'RESTORE_TOKEN',
-            payload: { token, user: JSON.parse(user) },
+            payload: { token, user: parsedUser },
           })
         } catch (err) {
           console.error('Failed to restore token:', err)
@@ -77,7 +81,8 @@ export function AuthProvider({ children }) {
     dispatch({ type: 'SET_LOADING', payload: true })
     try {
       const response = await authService.login({ email, password })
-      const { user, token } = response
+      const authData = response?.data || response
+      const { user, token } = authData
 
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
@@ -99,7 +104,8 @@ export function AuthProvider({ children }) {
     dispatch({ type: 'SET_LOADING', payload: true })
     try {
       const response = await authService.register(userData)
-      const { user, token } = response
+      const authData = response?.data || response
+      const { user, token } = authData
 
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))

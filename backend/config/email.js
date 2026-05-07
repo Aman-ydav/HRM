@@ -1,13 +1,14 @@
 // config/email.js
-// Email Configuration for Nodemailer
+// Email Configuration
 
 export const EMAIL_CONFIG = {
+  brevoApiKey: process.env.BREVO_API_KEY || '',
+  from: process.env.SMTP_FROM_EMAIL || process.env.EMAIL_FROM || 'noreply@hrm-reward-system.com',
   service: process.env.EMAIL_SERVICE || 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD,
   },
-  from: process.env.EMAIL_FROM || 'noreply@hrm-reward-system.com',
 };
 
 export const EMAIL_TEMPLATES = {

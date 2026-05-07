@@ -1,11 +1,14 @@
 // utils/emailUtils.js
 // Email Service Utility
 
+import axios from 'axios';
 import nodemailer from 'nodemailer';
 import { EMAIL_CONFIG } from '../config/email.js';
 
-// Create transporter
-const transporter = nodemailer.createTransport({
+const hasBrevoConfig = Boolean(EMAIL_CONFIG.brevoApiKey);
+
+// Create transporter only for legacy SMTP fallback
+const transporter = hasBrevoConfig ? null : nodemailer.createTransport({
   service: EMAIL_CONFIG.service,
   auth: {
     user: EMAIL_CONFIG.auth.user,
@@ -13,8 +16,42 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const sendViaBrevo = async (to, subject, htmlContent) => {
+  const response = await axios.post(
+    'https://api.brevo.com/v3/smtp/email',
+    {
+      sender: {
+        email: EMAIL_CONFIG.from.includes('<')
+          ? EMAIL_CONFIG.from.match(/<([^>]+)>/)?.[1] || EMAIL_CONFIG.from
+          : EMAIL_CONFIG.from,
+        name: EMAIL_CONFIG.from.includes('<')
+          ? EMAIL_CONFIG.from.split('<')[0].trim()
+          : 'HRM Reward System',
+      },
+      to: [{ email: to }],
+      subject,
+      htmlContent,
+    },
+    {
+      headers: {
+        'api-key': EMAIL_CONFIG.brevoApiKey,
+        'Content-Type': 'application/json',
+        accept: 'application/json',
+      },
+    }
+  );
+
+  return response.data;
+};
+
 export const sendEmail = async (to, subject, htmlContent) => {
   try {
+    if (hasBrevoConfig) {
+      const info = await sendViaBrevo(to, subject, htmlContent);
+      console.log(`✓ Email sent via Brevo: ${info.messageId || 'ok'}`);
+      return { success: true, info };
+    }
+
     const mailOptions = {
       from: EMAIL_CONFIG.from,
       to,

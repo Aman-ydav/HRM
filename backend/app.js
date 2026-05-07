@@ -35,8 +35,17 @@ const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || process.env.CORS_ORI
   .split(',')
   .map(origin => origin.trim());
 
+const isLocalLoopbackOrigin = (origin) => {
+  try {
+    const url = new URL(origin);
+    return ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
+  } catch {
+    return false;
+  }
+};
+
 corsOptions.origin = (origin, callback) => {
-  if (!origin || allowedOrigins.includes(origin)) {
+  if (!origin || allowedOrigins.includes(origin) || isLocalLoopbackOrigin(origin)) {
     callback(null, true);
   } else {
     callback(new Error('Not allowed by CORS'));

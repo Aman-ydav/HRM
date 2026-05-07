@@ -20,7 +20,7 @@ router.use(protect);
 
 // Reward routes
 router.post('/assign', authorize('admin', 'hr_manager'), assignReward);
-router.put('/approve/:id', authorize('admin'), approveReward);
+router.put('/approve/:id', authorize('admin', 'hr_manager'), approveReward);
 
 // Get routes
 router.get('/all', authorize('admin', 'hr_manager'), getAllRewards);

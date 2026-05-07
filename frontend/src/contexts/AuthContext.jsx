@@ -99,6 +99,14 @@ export function AuthProvider({ children }) {
       const authData = response?.data || response
       const { user, token } = authData
 
+      if (!user || !token) {
+        throw new Error('Invalid login response')
+      }
+
+      // Persist auth immediately so subsequent API calls in this flow are authenticated.
+      localStorage.setItem('token', token)
+      localStorage.setItem('user', JSON.stringify(user))
+
       let employee = null
       if (user?.role !== 'admin') {
         try {
@@ -108,9 +116,6 @@ export function AuthProvider({ children }) {
           console.warn('Failed to load employee profile:', profileError?.message || profileError)
         }
       }
-
-      localStorage.setItem('token', token)
-      localStorage.setItem('user', JSON.stringify(user))
 
       dispatch({
         type: 'LOGIN_SUCCESS',
@@ -132,6 +137,14 @@ export function AuthProvider({ children }) {
       const authData = response?.data || response
       const { user, token } = authData
 
+      if (!user || !token) {
+        throw new Error('Invalid registration response')
+      }
+
+      // Persist auth immediately so subsequent API calls in this flow are authenticated.
+      localStorage.setItem('token', token)
+      localStorage.setItem('user', JSON.stringify(user))
+
       let employee = null
       if (user?.role !== 'admin') {
         try {
@@ -141,9 +154,6 @@ export function AuthProvider({ children }) {
           console.warn('Failed to load employee profile:', profileError?.message || profileError)
         }
       }
-
-      localStorage.setItem('token', token)
-      localStorage.setItem('user', JSON.stringify(user))
 
       dispatch({
         type: 'LOGIN_SUCCESS',

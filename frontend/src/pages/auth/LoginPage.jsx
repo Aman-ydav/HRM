@@ -85,7 +85,7 @@ function LoginPage() {
           <div className="w-full border-t border-gray-700"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 bg-gray-900 text-gray-400">Don't have an account?</span>
+          <span className="px-2 py-5 bg-gray-900 text-gray-400">Don't have an account?</span>
         </div>
       </div>
 
@@ -99,7 +99,7 @@ function LoginPage() {
       <div className="p-4 bg-gray-800/50 border border-gray-700 rounded-lg text-xs text-gray-400">
         <p className="font-medium text-white mb-2">Demo Credentials:</p>
         <p>Admin: admin@hrm.com / admin123</p>
-        <p>HR Manager: hr@hrm.com / hr12345</p>
+        {/* <p>HR Manager: hr@hrm.com / hr12345</p> */}
         <p>Employee: john.doe@hrm.com / john123</p>
       </div>
     </form>

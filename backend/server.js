@@ -1,6 +1,3 @@
-// server.js
-// Server Entry Point with Production Safety Checks
-
 import dotenv from 'dotenv';
 import app from './app.js';
 import connectDB from './config/database.js';

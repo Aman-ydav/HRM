@@ -64,7 +64,7 @@ function LoginPage() {
       <div className="flex items-center justify-between text-sm">
         <label className="flex items-center gap-2">
           <input type="checkbox" className="w-4 h-4 rounded accent-orange-500" />
-          <span className="text-gray-400">Remember me</span>
+          {/* <span className="text-gray-400">Remember me</span> */}
         </label>
         <Link to="/forgot-password" className="text-orange-500 hover:underline">
           Forgot password?
@@ -97,10 +97,10 @@ function LoginPage() {
 
       {/* Demo credentials */}
       <div className="p-4 bg-gray-800/50 border border-gray-700 rounded-lg text-xs text-gray-400">
-        <p className="font-medium text-white mb-2">Demo Credentials:</p>
-        <p>Admin: admin@hrm.com / admin123</p>
+        <p className="font-medium text-white mb-2">Credentials:</p>
+        <p>HR Admin: admin@hrm.com / admin123</p>
         {/* <p>HR Manager: hr@hrm.com / hr12345</p> */}
-        <p>Employee: john.doe@hrm.com / john123</p>
+        <p>Employee: create your account plz</p>
       </div>
     </form>
   )

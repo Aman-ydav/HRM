@@ -191,6 +191,17 @@ const logGeminiError = (label, error) => {
   });
 };
 
+const isLocationRestrictedError = (error) => {
+  const status = error?.status || error?.response?.status || error?.cause?.status || null;
+  const message = String(error?.message || '').toLowerCase();
+  return (
+    status === 400 &&
+    (message.includes('user location is not supported') ||
+      message.includes('location is not supported') ||
+      message.includes('not supported for the api use'))
+  );
+};
+
 const callAIText = async (prompt, fallbackText) => {
   const client = getGeminiClient();
   const modelName = getGeminiModelName();
@@ -221,6 +232,13 @@ const callAIText = async (prompt, fallbackText) => {
     const text = result?.response?.text?.() || '';
     return text || fallbackText;
   } catch (error) {
+    if (isLocationRestrictedError(error)) {
+      console.warn('[Gemini] API access blocked for this deployment location; using fallback response.', {
+        model: modelName,
+      });
+      return fallbackText;
+    }
+
     logGeminiError('AI call', error);
     return fallbackText;
   }

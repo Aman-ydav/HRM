@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import Employee from '../models/Employee.js';
 import Attendance from '../models/Attendance.js';
 import Performance from '../models/Performance.js';
@@ -152,30 +152,76 @@ const extractJsonObject = (text) => {
   }
 };
 
-const callAIText = async (prompt, fallbackText) => {
-  const apiKey = process.env.GENAI_API_KEY || process.env.GEMINI_API_KEY;
-  const model = process.env.GENAI_MODEL || 'gemini-2.5-flash';
+let geminiClient = null;
+let geminiClientKey = '';
+
+const getGeminiApiKey = () => process.env.GENAI_API_KEY || process.env.GEMINI_API_KEY || '';
+
+const getGeminiModelName = () => process.env.GENAI_MODEL || 'gemini-2.5-flash';
+
+const getGeminiClient = () => {
+  const apiKey = getGeminiApiKey();
 
   if (!apiKey) {
+    return null;
+  }
+
+  if (!geminiClient || geminiClientKey !== apiKey) {
+    geminiClient = new GoogleGenerativeAI(apiKey);
+    geminiClientKey = apiKey;
+  }
+
+  return geminiClient;
+};
+
+const logGeminiError = (label, error) => {
+  console.error(`[Gemini] ${label} failed`, {
+    model: getGeminiModelName(),
+    status: error?.status || error?.response?.status || error?.cause?.status || null,
+    message: error?.message || 'Unknown Gemini error',
+    responseBody:
+      error?.response?.data ||
+      error?.response?.body ||
+      error?.details ||
+      error?.error ||
+      error?.cause?.response?.data ||
+      error?.cause?.response?.body ||
+      error?.cause ||
+      null,
+  });
+};
+
+const callAIText = async (prompt, fallbackText) => {
+  const client = getGeminiClient();
+  const modelName = getGeminiModelName();
+
+  if (!client) {
     return fallbackText;
   }
 
   try {
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        contents: [{ parts: [{ text: prompt }] }],
+    const model = client.getGenerativeModel({
+      model: modelName,
+      generationConfig: {
+        temperature: 0.2,
+        maxOutputTokens: 1024,
+        responseMimeType: 'text/plain',
       },
-      {
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 30000,
-      }
-    );
+    });
 
-    const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const result = await model.generateContent({
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: prompt }],
+        },
+      ],
+    });
+
+    const text = result?.response?.text?.() || '';
     return text || fallbackText;
   } catch (error) {
-    console.error('AI call failed:', error.message);
+    logGeminiError('AI call', error);
     return fallbackText;
   }
 };

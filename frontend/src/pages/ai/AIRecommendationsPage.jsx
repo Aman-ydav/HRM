@@ -16,7 +16,6 @@ function AIRecommendationsPage() {
   const [fairnessAnalysis, setFairnessAnalysis] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
   const [chatMessages, setChatMessages] = useState([
@@ -122,7 +121,6 @@ function AIRecommendationsPage() {
       const response = await aiService.chat(text)
       const payload = response?.data || response
       const reply = payload?.reply || 'I could not generate an answer right now.'
-
       setChatMessages((prev) => [...prev, { role: 'assistant', text: reply }])
     } catch (err) {
       setChatMessages((prev) => [
@@ -177,9 +175,7 @@ function AIRecommendationsPage() {
             </div>
           ))}
           {chatLoading && (
-            <div className="bg-gray-800 rounded-xl p-3 text-sm text-gray-300 mr-8">
-              Thinking...
-            </div>
+            <div className="bg-gray-800 rounded-xl p-3 text-sm text-gray-300 mr-8">Thinking...</div>
           )}
         </div>
 
@@ -222,7 +218,9 @@ function AIRecommendationsPage() {
                       <p className="text-xs uppercase tracking-wider text-gray-400 mb-1">Improvements</p>
                       <div className="space-y-2">
                         {recommendationData.improvements.map((item, idx) => (
-                          <div key={idx} className="p-2 bg-gray-800 rounded text-gray-200">- {item}</div>
+                          <div key={idx} className="p-2 bg-gray-800 rounded text-gray-200">
+                            - {item}
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -240,7 +238,9 @@ function AIRecommendationsPage() {
                       <p className="text-xs uppercase tracking-wider text-gray-400 mb-1">Alerts</p>
                       <div className="space-y-2">
                         {recommendationData.alerts.map((item, idx) => (
-                          <div key={idx} className="p-2 bg-red-500/10 border border-red-500/20 rounded text-red-300">{item}</div>
+                          <div key={idx} className="p-2 bg-red-500/10 border border-red-500/20 rounded text-red-300">
+                            {item}
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -251,7 +251,9 @@ function AIRecommendationsPage() {
                       <p className="text-xs uppercase tracking-wider text-gray-400 mb-1">Next Steps</p>
                       <div className="space-y-2">
                         {recommendationData.nextSteps.map((item, idx) => (
-                          <div key={idx} className="p-2 bg-gray-800 rounded text-gray-200">- {item}</div>
+                          <div key={idx} className="p-2 bg-gray-800 rounded text-gray-200">
+                            - {item}
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -275,7 +277,9 @@ function AIRecommendationsPage() {
                       <div key={emp.employeeId} className="p-3 bg-gray-800 rounded">
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-medium text-white">{emp.name}</span>
-                          <Badge variant={getRiskColor(emp.riskLevel)}>{String(emp.riskLevel || '').toUpperCase()}</Badge>
+                          <Badge variant={getRiskColor(emp.riskLevel)}>
+                            {String(emp.riskLevel || '').toUpperCase()}
+                          </Badge>
                         </div>
                         <p className="text-xs text-gray-400 mb-2">{emp.reason || 'No reason available'}</p>
                         <div className="w-full bg-gray-700 rounded-full h-2">
@@ -288,7 +292,7 @@ function AIRecommendationsPage() {
                                 : 'bg-green-500'
                             }`}
                             style={{ width: `${Math.min(emp.riskScore || 0, 100)}%` }}
-                          ></div>
+                          />
                         </div>
                       </div>
                     ))}
@@ -308,7 +312,7 @@ function AIRecommendationsPage() {
                   <div className="space-y-3">
                     {fairnessRows.slice(0, 6).map((anom, idx) => (
                       <div key={anom.employeeId || idx} className="p-3 bg-gray-800 rounded border-l-2 border-teal-500">
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center justify-between mb-2 gap-3">
                           <span className="font-medium text-white">{anom.employeeName}</span>
                           <Badge variant="orange">{anom.percentage?.toFixed(0) || 0}% above avg</Badge>
                         </div>

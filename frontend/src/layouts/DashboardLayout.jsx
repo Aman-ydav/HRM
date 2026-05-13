@@ -22,8 +22,6 @@ function DashboardLayout() {
       { icon: Home, label: 'Dashboard', path: '/dashboard' },
       { icon: Clock, label: 'Attendance', path: '/attendance' },
       { icon: Gift, label: 'Rewards', path: '/rewards' },
-      { icon: BarChart3, label: 'Performance', path: '/performance' },
-      { icon: BarChart3, label: 'Report', path: '/report' },
       { icon: MessageSquare, label: 'Feedback', path: '/feedback' },
       { icon: Zap, label: 'AI Insights', path: '/ai-insights' },
     ],

@@ -31,13 +31,13 @@ function LoginPage() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Welcome Back</h2>
-        <p className="text-gray-400">Sign in to your account</p>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">Welcome Back</h2>
+        <p className="text-slate-600">Sign in to your account</p>
       </div>
 
       {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-          <p className="text-red-400 text-sm">{error}</p>
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-700 text-sm">{error}</p>
         </div>
       )}
 
@@ -63,10 +63,10 @@ function LoginPage() {
 
       <div className="flex items-center justify-between text-sm">
         <label className="flex items-center gap-2">
-          <input type="checkbox" className="w-4 h-4 rounded accent-orange-500" />
-          {/* <span className="text-gray-400">Remember me</span> */}
+          <input type="checkbox" className="w-4 h-4 rounded accent-orange-600" />
+          {/* <span className="text-slate-600">Remember me</span> */}
         </label>
-        <Link to="/forgot-password" className="text-orange-500 hover:underline">
+        <Link to="/forgot-password" className="text-orange-600 hover:underline">
           Forgot password?
         </Link>
       </div>
@@ -82,10 +82,10 @@ function LoginPage() {
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-700"></div>
+          <div className="w-full border-t border-slate-200"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-2 py-5 bg-gray-900 text-gray-400">Don't have an account?</span>
+          <span className="px-2 py-5 bg-slate-50 text-slate-600">Don't have an account?</span>
         </div>
       </div>
 
@@ -96,8 +96,8 @@ function LoginPage() {
       </Link>
 
       {/* Demo credentials */}
-      <div className="p-4 bg-gray-800/50 border border-gray-700 rounded-lg text-xs text-gray-400">
-        <p className="font-medium text-white mb-2">Credentials:</p>
+      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-xs text-slate-700">
+        <p className="font-medium text-slate-900 mb-2">Credentials:</p>
         <p>HR Admin: admin@hrm.com / admin123</p>
         {/* <p>HR Manager: hr@hrm.com / hr12345</p> */}
         <p>Employee: create your account plz</p>

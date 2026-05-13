@@ -18,6 +18,7 @@ import EmployeeDashboard from './pages/dashboard/EmployeeDashboard'
 import AttendancePage from './pages/attendance/AttendancePage'
 import RewardsPage from './pages/rewards/RewardsPage'
 import PerformancePage from './pages/performance/PerformancePage'
+import ReportPage from './pages/reports/ReportPage'
 import FeedbackPage from './pages/feedback/FeedbackPage'
 import AIRecommendationsPage from './pages/ai/AIRecommendationsPage'
 
@@ -25,6 +26,7 @@ import AIRecommendationsPage from './pages/ai/AIRecommendationsPage'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import EmployeesManagement from './pages/admin/EmployeesManagement'
 import RewardManagement from './pages/admin/RewardManagement'
+import DepartmentRewardsPage from './pages/admin/DepartmentRewardsPage'
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute'
@@ -51,6 +53,7 @@ function App() {
             <Route path="/attendance" element={<AttendancePage />} />
             <Route path="/rewards" element={<RewardsPage />} />
             <Route path="/performance" element={<PerformancePage />} />
+            <Route path="/report" element={<ReportPage />} />
             <Route path="/feedback" element={<FeedbackPage />} />
             <Route path="/ai-insights" element={<AIRecommendationsPage />} />
 
@@ -58,6 +61,7 @@ function App() {
             <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/employees" element={<ProtectedRoute requiredRole="admin"><EmployeesManagement /></ProtectedRoute>} />
             <Route path="/admin/rewards" element={<ProtectedRoute requiredRole={['admin', 'hr_manager']}><RewardManagement /></ProtectedRoute>} />
+                      <Route path="/admin/department-rewards" element={<ProtectedRoute requiredRole="admin"><DepartmentRewardsPage /></ProtectedRoute>} />
           </Route>
 
           {/* Default redirect */}

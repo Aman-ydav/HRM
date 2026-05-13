@@ -4,8 +4,8 @@ export const Button = React.forwardRef(({ className = '', children, variant = 'p
   const baseStyles = 'px-4 py-2 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
   const variants = {
     primary: 'bg-orange-500 text-white hover:bg-orange-600 active:scale-95',
-    secondary: 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-600',
-    ghost: 'text-gray-400 hover:text-white hover:bg-gray-800',
+    secondary: 'bg-slate-200 text-slate-900 hover:bg-slate-300 border border-slate-300',
+    ghost: 'text-slate-600 hover:text-slate-900 hover:bg-slate-100',
     danger: 'bg-red-600 text-white hover:bg-red-700',
   }
 
@@ -23,31 +23,31 @@ export const Button = React.forwardRef(({ className = '', children, variant = 'p
 
 export const Input = React.forwardRef(({ className = '', type = 'text', label, error, ...props }, ref) => (
   <div className="w-full">
-    {label && <label className="block text-sm font-medium text-gray-300 mb-2">{label}</label>}
+    {label && <label className="block text-sm font-medium text-slate-700 mb-2">{label}</label>}
     <input
       ref={ref}
       type={type}
-      className={`w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 ${className}`}
+      className={`w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 ${className}`}
       {...props}
     />
-    {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+    {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
   </div>
 ))
 
 export const Card = ({ className = '', children, ...props }) => (
-  <div className={`bg-gray-900 border border-gray-800 rounded-lg p-6 ${className}`} {...props}>
+  <div className={`bg-white border border-slate-200 rounded-lg p-6 shadow-sm ${className}`} {...props}>
     {children}
   </div>
 )
 
 export const Badge = ({ children, variant = 'default', className = '' }) => {
   const variants = {
-    default: 'bg-gray-800 text-gray-300',
-    orange: 'bg-orange-500/20 text-orange-400',
-    green: 'bg-green-500/20 text-green-400',
-    red: 'bg-red-500/20 text-red-400',
-    yellow: 'bg-yellow-500/20 text-yellow-400',
-    blue: 'bg-blue-500/20 text-blue-400',
+    default: 'bg-slate-100 text-slate-700',
+    orange: 'bg-orange-100 text-orange-700',
+    green: 'bg-emerald-100 text-emerald-700',
+    red: 'bg-red-100 text-red-700',
+    yellow: 'bg-yellow-100 text-yellow-700',
+    blue: 'bg-sky-100 text-sky-700',
   }
 
   return (
@@ -59,27 +59,27 @@ export const Badge = ({ children, variant = 'default', className = '' }) => {
 
 export const Select = React.forwardRef(({ label, error, children, ...props }, ref) => (
   <div className="w-full">
-    {label && <label className="block text-sm font-medium text-gray-300 mb-2">{label}</label>}
+    {label && <label className="block text-sm font-medium text-slate-700 mb-2">{label}</label>}
     <select
       ref={ref}
-      className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
       {...props}
     >
       {children}
     </select>
-    {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+    {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
   </div>
 ))
 
 export const Textarea = React.forwardRef(({ label, error, ...props }, ref) => (
   <div className="w-full">
-    {label && <label className="block text-sm font-medium text-gray-300 mb-2">{label}</label>}
+    {label && <label className="block text-sm font-medium text-slate-700 mb-2">{label}</label>}
     <textarea
       ref={ref}
-      className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 resize-none"
+      className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 resize-none"
       {...props}
     />
-    {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+    {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
   </div>
 ))
 
@@ -87,14 +87,14 @@ export const Modal = ({ open, onClose, title, children, footer }) => {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-gray-900 border border-gray-800 rounded-lg max-w-md w-full mx-4">
-        <div className="flex justify-between items-center p-6 border-b border-gray-800">
-          <h2 className="text-lg font-bold text-white">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">X</button>
+    <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+      <div className="bg-white border border-slate-200 rounded-lg max-w-md w-full mx-4 shadow-lg">
+        <div className="flex justify-between items-center p-6 border-b border-slate-200">
+          <h2 className="text-lg font-bold text-slate-900">{title}</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">X</button>
         </div>
         <div className="p-6">{children}</div>
-        {footer && <div className="p-6 border-t border-gray-800 flex gap-3 justify-end">{footer}</div>}
+        {footer && <div className="p-6 border-t border-slate-200 flex gap-3 justify-end">{footer}</div>}
       </div>
     </div>
   )
@@ -107,5 +107,5 @@ export const LoadingSpinner = ({ size = 'md' }) => {
     lg: 'w-12 h-12',
   }
 
-  return <div className={`${sizes[size]} border-4 border-orange-500 border-t-transparent rounded-full animate-spin`}></div>
+  return <div className={`${sizes[size]} border-4 border-slate-300 border-t-orange-500 rounded-full animate-spin`}></div>
 }

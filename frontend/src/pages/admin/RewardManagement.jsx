@@ -93,19 +93,19 @@ function RewardManagement() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-white mb-2">Reward Management</h1>
-        <p className="text-gray-400">Assign and approve employee rewards</p>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Reward Management</h1>
+        <p className="text-slate-600">Assign and approve employee rewards</p>
       </div>
 
       {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-          <p className="text-red-400">{error}</p>
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-700">{error}</p>
         </div>
       )}
 
       {/* Assign Reward Form */}
       <Card>
-        <h3 className="text-lg font-bold text-white mb-4">Assign New Reward</h3>
+        <h3 className="text-lg font-bold text-slate-900 mb-4">Assign New Reward</h3>
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Select
@@ -170,7 +170,7 @@ function RewardManagement() {
       </Card>
 
       {/* Rewards Tabs */}
-      <div className="flex gap-2 border-b border-gray-800">
+      <div className="flex gap-2 border-b border-slate-200">
         {['pending', 'approved', 'rejected'].map(tab => (
           <button
             key={tab}
@@ -178,7 +178,7 @@ function RewardManagement() {
             className={`px-4 py-2 border-b-2 transition-colors ${
               activeTab === tab
                 ? 'border-orange-500 text-orange-500'
-                : 'border-transparent text-gray-400 hover:text-white'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -197,21 +197,21 @@ function RewardManagement() {
               <Card key={reward._id} className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h4 className="font-bold text-white">
+                    <h4 className="font-bold text-slate-900">
                       {reward.employeeId?.firstName} {reward.employeeId?.lastName}
                     </h4>
                     <Badge variant={reward.rewardType === 'points' ? 'orange' : 'green'}>
                       {reward.rewardType}
                     </Badge>
                   </div>
-                  <p className="text-gray-400 mb-2">{reward.reason}</p>
+                  <p className="text-slate-600 mb-2">{reward.reason}</p>
                   <div className="flex gap-3 text-sm">
-                    <span className="text-gray-500">
+                    <span className="text-slate-500">
                       {reward.points && `${reward.points} pts`}
                       {reward.bonus && `$${reward.bonus}`}
                     </span>
-                    <span className="text-gray-500">•</span>
-                    <span className="text-gray-500">
+                    <span className="text-slate-500">•</span>
+                    <span className="text-slate-500">
                       {new Date(reward.createdAt).toLocaleDateString()}
                     </span>
                   </div>
@@ -250,7 +250,7 @@ function RewardManagement() {
             ))
           ) : (
             <Card>
-              <p className="text-gray-400 text-center py-8">No rewards found</p>
+              <p className="text-slate-600 text-center py-8">No rewards found</p>
             </Card>
           )}
         </div>
@@ -276,14 +276,14 @@ function RewardManagement() {
         {selectedReward && (
           <div className="space-y-4">
             <div>
-              <p className="text-gray-400 text-sm">Reward</p>
-              <p className="font-bold text-white">
+              <p className="text-slate-600 text-sm">Reward</p>
+              <p className="font-bold text-slate-900">
                 {selectedReward.employeeId?.firstName} {selectedReward.employeeId?.lastName} - {selectedReward.rewardType}
               </p>
             </div>
             <div>
-              <p className="text-gray-400 text-sm">Reason</p>
-              <p className="text-white">{selectedReward.reason}</p>
+              <p className="text-slate-600 text-sm">Reason</p>
+              <p className="text-slate-900">{selectedReward.reason}</p>
             </div>
             <Textarea
               label={`${approvalAction === 'approved' ? 'Approval' : 'Rejection'} Notes (Optional)`}

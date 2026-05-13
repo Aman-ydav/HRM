@@ -71,13 +71,13 @@ function RegisterPage() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Create Account</h2>
-        <p className="text-gray-400">Join our reward system</p>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">Create Account</h2>
+        <p className="text-slate-600">Join our reward system</p>
       </div>
 
       {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-          <p className="text-red-400 text-sm">{error}</p>
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-700 text-sm">{error}</p>
         </div>
       )}
 
@@ -167,9 +167,9 @@ function RegisterPage() {
       />
 
       <div className="flex items-center gap-2">
-        <input type="checkbox" className="w-4 h-4 rounded accent-orange-500" required />
-        <span className="text-sm text-gray-400">
-          I agree to the <Link to="#" className="text-orange-500 hover:underline">Terms of Service</Link>
+        <input type="checkbox" className="w-4 h-4 rounded accent-orange-600" required />
+        <span className="text-sm text-slate-600">
+          I agree to the <Link to="#" className="text-orange-600 hover:underline">Terms of Service</Link>
         </span>
       </div>
 
@@ -183,8 +183,8 @@ function RegisterPage() {
       </Button>
 
       <div className="text-center text-sm">
-        <span className="text-gray-400">Already have an account? </span>
-        <Link to="/login" className="text-orange-500 hover:underline">Sign in</Link>
+        <span className="text-slate-600">Already have an account? </span>
+        <Link to="/login" className="text-orange-600 hover:underline">Sign in</Link>
       </div>
     </form>
   )

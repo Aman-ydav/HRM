@@ -142,22 +142,22 @@ function AIRecommendationsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Zap className="text-orange-500" size={32} />
+        <Zap className="text-orange-600" size={32} />
         <div>
-          <h1 className="text-3xl font-bold text-white">AI Insights</h1>
-          <p className="text-gray-400">Use app data to analyze employee and team performance</p>
+          <h1 className="text-3xl font-bold text-slate-900">AI Insights</h1>
+          <p className="text-slate-600">Use app data to analyze employee and team performance</p>
         </div>
       </div>
 
       {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-          <p className="text-red-400">{error}</p>
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-700">{error}</p>
         </div>
       )}
 
-      <Card className="border border-orange-500/20 bg-gradient-to-r from-orange-500/5 to-transparent">
+      <Card className="border border-orange-200 bg-gradient-to-r from-orange-50 to-transparent">
         <div className="flex items-center justify-between gap-4 mb-4">
-          <h2 className="text-xl font-bold text-white">AI Chat</h2>
+          <h2 className="text-xl font-bold text-slate-900">AI Chat</h2>
           <Badge variant="orange">{role || 'user'}</Badge>
         </div>
 
@@ -167,15 +167,15 @@ function AIRecommendationsPage() {
               key={`${message.role}-${idx}`}
               className={`rounded-xl p-3 text-sm ${
                 message.role === 'user'
-                  ? 'bg-orange-500/20 text-orange-100 ml-8'
-                  : 'bg-gray-800 text-gray-200 mr-8'
+                  ? 'bg-orange-100 text-orange-900 ml-8'
+                  : 'bg-slate-100 text-slate-900 mr-8'
               }`}
             >
               <p className="whitespace-pre-wrap">{message.text}</p>
             </div>
           ))}
           {chatLoading && (
-            <div className="bg-gray-800 rounded-xl p-3 text-sm text-gray-300 mr-8">Thinking...</div>
+            <div className="bg-slate-100 rounded-xl p-3 text-sm text-slate-900 mr-8">Thinking...</div>
           )}
         </div>
 
@@ -204,21 +204,21 @@ function AIRecommendationsPage() {
               <div className="flex items-start gap-4">
                 <Lightbulb className="text-orange-500 flex-shrink-0 mt-1" size={24} />
                 <div className="flex-1 space-y-4">
-                  <h2 className="text-xl font-bold text-white">Personal Recommendations</h2>
+                  <h2 className="text-xl font-bold text-slate-900">Personal Recommendations</h2>
 
                   {recommendationData.assessment && (
                     <div>
-                      <p className="text-xs uppercase tracking-wider text-gray-400 mb-1">Assessment</p>
-                      <p className="text-gray-200">{recommendationData.assessment}</p>
+                      <p className="text-xs uppercase tracking-wider text-slate-600 mb-1">Assessment</p>
+                      <p className="text-slate-700">{recommendationData.assessment}</p>
                     </div>
                   )}
 
                   {recommendationData.improvements.length > 0 && (
                     <div>
-                      <p className="text-xs uppercase tracking-wider text-gray-400 mb-1">Improvements</p>
+                      <p className="text-xs uppercase tracking-wider text-slate-600 mb-1">Improvements</p>
                       <div className="space-y-2">
                         {recommendationData.improvements.map((item, idx) => (
-                          <div key={idx} className="p-2 bg-gray-800 rounded text-gray-200">
+                          <div key={idx} className="p-2 bg-slate-100 rounded text-slate-900">
                             - {item}
                           </div>
                         ))}
@@ -228,17 +228,17 @@ function AIRecommendationsPage() {
 
                   {recommendationData.rewardEligibility && (
                     <div>
-                      <p className="text-xs uppercase tracking-wider text-gray-400 mb-1">Reward Eligibility</p>
-                      <p className="text-green-300">{recommendationData.rewardEligibility}</p>
+                      <p className="text-xs uppercase tracking-wider text-slate-600 mb-1">Reward Eligibility</p>
+                      <p className="text-green-700">{recommendationData.rewardEligibility}</p>
                     </div>
                   )}
 
                   {recommendationData.alerts.length > 0 && (
                     <div>
-                      <p className="text-xs uppercase tracking-wider text-gray-400 mb-1">Alerts</p>
+                      <p className="text-xs uppercase tracking-wider text-slate-600 mb-1">Alerts</p>
                       <div className="space-y-2">
                         {recommendationData.alerts.map((item, idx) => (
-                          <div key={idx} className="p-2 bg-red-500/10 border border-red-500/20 rounded text-red-300">
+                            <div key={idx} className="p-2 bg-red-50 border border-red-200 rounded text-red-700">
                             {item}
                           </div>
                         ))}
@@ -248,10 +248,10 @@ function AIRecommendationsPage() {
 
                   {recommendationData.nextSteps.length > 0 && (
                     <div>
-                      <p className="text-xs uppercase tracking-wider text-gray-400 mb-1">Next Steps</p>
+                      <p className="text-xs uppercase tracking-wider text-slate-600 mb-1">Next Steps</p>
                       <div className="space-y-2">
                         {recommendationData.nextSteps.map((item, idx) => (
-                          <div key={idx} className="p-2 bg-gray-800 rounded text-gray-200">
+                          <div key={idx} className="p-2 bg-slate-100 rounded text-slate-900">
                             - {item}
                           </div>
                         ))}
@@ -268,20 +268,20 @@ function AIRecommendationsPage() {
               <Card className="border border-yellow-500/20">
                 <div className="flex items-center gap-3 mb-4">
                   <AlertTriangle className="text-yellow-500" size={24} />
-                  <h3 className="text-lg font-bold text-white">Burnout Analysis</h3>
+                  <h3 className="text-lg font-bold text-slate-900">Burnout Analysis</h3>
                 </div>
 
                 {burnoutRows.length > 0 ? (
                   <div className="space-y-3">
                     {burnoutRows.slice(0, 6).map((emp) => (
-                      <div key={emp.employeeId} className="p-3 bg-gray-800 rounded">
+                      <div key={emp.employeeId} className="p-3 bg-slate-100 rounded">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="font-medium text-white">{emp.name}</span>
+                          <span className="font-medium text-slate-900">{emp.name}</span>
                           <Badge variant={getRiskColor(emp.riskLevel)}>
                             {String(emp.riskLevel || '').toUpperCase()}
                           </Badge>
                         </div>
-                        <p className="text-xs text-gray-400 mb-2">{emp.reason || 'No reason available'}</p>
+                        <p className="text-xs text-slate-600 mb-2">{emp.reason || 'No reason available'}</p>
                         <div className="w-full bg-gray-700 rounded-full h-2">
                           <div
                             className={`h-2 rounded-full ${
@@ -298,32 +298,32 @@ function AIRecommendationsPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-400">No burnout indicators available right now.</p>
+                  <p className="text-slate-600">No burnout indicators available right now.</p>
                 )}
               </Card>
 
               <Card className="border border-teal-500/20">
                 <div className="flex items-center gap-3 mb-4">
                   <TrendingDown className="text-teal-500" size={24} />
-                  <h3 className="text-lg font-bold text-white">Reward Fairness</h3>
+                  <h3 className="text-lg font-bold text-slate-900">Reward Fairness</h3>
                 </div>
 
                 {fairnessRows.length > 0 ? (
                   <div className="space-y-3">
                     {fairnessRows.slice(0, 6).map((anom, idx) => (
-                      <div key={anom.employeeId || idx} className="p-3 bg-gray-800 rounded border-l-2 border-teal-500">
+                      <div key={anom.employeeId || idx} className="p-3 bg-slate-100 rounded border-l-2 border-teal-500">
                         <div className="flex items-center justify-between mb-2 gap-3">
-                          <span className="font-medium text-white">{anom.employeeName}</span>
+                          <span className="font-medium text-slate-900">{anom.employeeName}</span>
                           <Badge variant="orange">{anom.percentage?.toFixed(0) || 0}% above avg</Badge>
                         </div>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-slate-600">
                           Reward count: {anom.rewardPoints || 0} | Average: {anom.average || 0}
                         </p>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-400">No major fairness anomalies detected.</p>
+                  <p className="text-slate-600">No major fairness anomalies detected.</p>
                 )}
 
                 {fairnessAnalysis?.summary && (
@@ -335,12 +335,12 @@ function AIRecommendationsPage() {
             </div>
           )}
 
-          <Card className="bg-gray-800/50 border border-gray-700">
+          <Card className="bg-slate-50 border border-slate-200">
             <div className="flex items-start gap-3">
               <Zap className="text-orange-500 flex-shrink-0 mt-1" size={18} />
               <div>
-                <p className="font-medium text-white mb-1">About AI Insights</p>
-                <p className="text-sm text-gray-400">
+                <p className="font-medium text-slate-900 mb-1">About AI Insights</p>
+                <p className="text-sm text-slate-600">
                   AI uses current app data (attendance, rewards, performance, feedback) to generate role-aware insights.
                 </p>
               </div>

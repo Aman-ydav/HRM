@@ -18,6 +18,7 @@ import rewardRoutes from './routes/rewardRoutes.js';
 import feedbackRoutes from './routes/feedbackRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
 
 dotenv.config();
 
@@ -72,6 +73,8 @@ app.use('/api/v1/rewards', rewardRoutes);
 app.use('/api/v1/feedback', feedbackRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/ai', aiRoutes);
+// v2 reports (new, aggregation-heavy endpoints)
+app.use('/api/v2/reports', reportRoutes);
 
 // Health check endpoint
 app.get('/api/v1/health', (req, res) => {

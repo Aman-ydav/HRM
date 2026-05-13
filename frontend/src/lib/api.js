@@ -135,3 +135,10 @@ export const aiService = {
   getRewardFairnessAnalysis: () => apiClient.get('/ai/fairness-analysis'),
   chat: (message, employeeId = null) => apiClient.post('/ai/chat', { message, employeeId }),
 }
+
+export const reportService = {
+  getEmployeeReport: (employeeId) =>
+    apiClient.get(`/v2/reports/employee/${employeeId}`),
+  getDepartmentReport: (department) =>
+    apiClient.get(`/v2/reports/department/${department}`),
+}

@@ -73,26 +73,26 @@ function AttendancePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-white mb-2">Attendance</h1>
-        <p className="text-gray-400">Track your attendance and working hours</p>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Attendance</h1>
+        <p className="text-slate-600">Track your attendance and working hours</p>
       </div>
 
       {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-          <p className="text-red-400">{error}</p>
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-700">{error}</p>
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-gray-800">
+      <div className="flex gap-2 border-b border-slate-200">
         {['history', 'monthly', 'analytics'].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`px-4 py-2 border-b-2 transition-colors ${
               activeTab === tab
-                ? 'border-orange-500 text-orange-500'
-                : 'border-transparent text-gray-400 hover:text-white'
+                ? 'border-orange-600 text-orange-600'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -116,10 +116,10 @@ function AttendancePage() {
                       <div className="flex items-center gap-4">
                         <Calendar className="text-orange-500" size={20} />
                         <div>
-                          <p className="font-medium text-white">
+                          <p className="font-medium text-slate-900">
                             {new Date(record.date).toLocaleDateString()}
                           </p>
-                          <p className="text-sm text-gray-400">
+                          <p className="text-sm text-slate-600">
                             {record.checkInTime && `Check-in: ${new Date(record.checkInTime).toLocaleTimeString()}`}
                             {record.checkOutTime && ` | Check-out: ${new Date(record.checkOutTime).toLocaleTimeString()}`}
                           </p>
@@ -130,7 +130,7 @@ function AttendancePage() {
                           {record.status.toUpperCase()}
                         </Badge>
                         {record.totalHours && (
-                          <p className="text-xs text-gray-400 mt-2">{record.totalHours.toFixed(1)}h</p>
+                          <p className="text-xs text-slate-600 mt-2">{record.totalHours.toFixed(1)}h</p>
                         )}
                       </div>
                     </div>
@@ -138,7 +138,7 @@ function AttendancePage() {
                 ))
               ) : (
                 <Card>
-                  <p className="text-gray-400 text-center py-8">No attendance records found</p>
+                  <p className="text-slate-600 text-center py-8">No attendance records found</p>
                 </Card>
               )}
             </div>
@@ -149,43 +149,43 @@ function AttendancePage() {
             <div className="space-y-4">
               <Card>
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-bold text-white">Monthly Report</h3>
+                  <h3 className="text-lg font-bold text-slate-900">Monthly Report</h3>
                   <input
                     type="month"
                     value={selectedMonth}
                     onChange={(e) => setSelectedMonth(e.target.value)}
-                    className="bg-gray-800 text-white px-3 py-1 rounded border border-gray-700"
+                    className="bg-white text-slate-900 px-3 py-1 rounded border border-slate-200"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-4 bg-gray-800 rounded">
-                    <p className="text-gray-400 text-sm">Total Days</p>
+                  <div className="p-4 bg-slate-50 rounded">
+                    <p className="text-slate-600 text-sm">Total Days</p>
                     <p className="text-2xl font-bold text-orange-500">{monthlyReport.total || 0}</p>
                   </div>
-                  <div className="p-4 bg-gray-800 rounded">
-                    <p className="text-gray-400 text-sm">Present</p>
-                    <p className="text-2xl font-bold text-green-400">{monthlyReport.present || 0}</p>
+                  <div className="p-4 bg-slate-50 rounded">
+                    <p className="text-slate-600 text-sm">Present</p>
+                    <p className="text-2xl font-bold text-green-600">{monthlyReport.present || 0}</p>
                   </div>
-                  <div className="p-4 bg-gray-800 rounded">
-                    <p className="text-gray-400 text-sm">Absent</p>
-                    <p className="text-2xl font-bold text-red-400">{monthlyReport.absent || 0}</p>
+                  <div className="p-4 bg-slate-50 rounded">
+                    <p className="text-slate-600 text-sm">Absent</p>
+                    <p className="text-2xl font-bold text-red-600">{monthlyReport.absent || 0}</p>
                   </div>
-                  <div className="p-4 bg-gray-800 rounded">
-                    <p className="text-gray-400 text-sm">Late</p>
-                    <p className="text-2xl font-bold text-yellow-400">{monthlyReport.late || 0}</p>
+                  <div className="p-4 bg-slate-50 rounded">
+                    <p className="text-slate-600 text-sm">Late</p>
+                    <p className="text-2xl font-bold text-yellow-600">{monthlyReport.late || 0}</p>
                   </div>
                 </div>
 
-                <div className="mt-6 p-4 bg-gray-800 rounded">
-                  <p className="text-gray-400 text-sm mb-2">Attendance Percentage</p>
-                  <div className="w-full bg-gray-700 rounded-full h-3">
+                <div className="mt-6 p-4 bg-slate-50 rounded">
+                  <p className="text-slate-600 text-sm mb-2">Attendance Percentage</p>
+                  <div className="w-full bg-slate-200 rounded-full h-3">
                     <div
                       className="bg-orange-500 h-3 rounded-full transition-all"
                       style={{ width: `${monthlyReport.percentage || 0}%` }}
                     ></div>
                   </div>
-                  <p className="text-orange-400 font-bold mt-2">{monthlyReport.percentage?.toFixed(1) || 0}%</p>
+                  <p className="text-orange-600 font-bold mt-2">{monthlyReport.percentage?.toFixed(1) || 0}%</p>
                 </div>
               </Card>
             </div>
@@ -197,43 +197,43 @@ function AttendancePage() {
               <Card>
                 <div className="flex items-center gap-2 mb-6">
                   <TrendingUp className="text-orange-500" />
-                  <h3 className="text-lg font-bold text-white">12-Month Analytics</h3>
+                  <h3 className="text-lg font-bold text-slate-900">12-Month Analytics</h3>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-gray-800 rounded">
-                    <p className="text-gray-400 text-sm">Avg Daily Hours</p>
+                  <div className="p-4 bg-slate-50 rounded">
+                    <p className="text-slate-600 text-sm">Avg Daily Hours</p>
                     <p className="text-2xl font-bold text-orange-500">
                       {analytics.averageWorkingHours?.toFixed(1) || 0}
                     </p>
                   </div>
-                  <div className="p-4 bg-gray-800 rounded">
-                    <p className="text-gray-400 text-sm">Avg Attendance</p>
+                  <div className="p-4 bg-slate-50 rounded">
+                    <p className="text-slate-600 text-sm">Avg Attendance</p>
                     <p className="text-2xl font-bold text-green-500">
                       {analytics.attendancePercentage?.toFixed(1) || 0}%
                     </p>
                   </div>
-                  <div className="p-4 bg-gray-800 rounded">
-                    <p className="text-gray-400 text-sm">Late Arrivals</p>
+                  <div className="p-4 bg-slate-50 rounded">
+                    <p className="text-slate-600 text-sm">Late Arrivals</p>
                     <p className="text-2xl font-bold text-yellow-500">{analytics.lateCount || 0}</p>
                   </div>
                 </div>
 
                 {analytics.totalRecords !== undefined && (
                   <div className="mt-6">
-                    <h4 className="font-medium text-white mb-3">Summary</h4>
+                    <h4 className="font-medium text-slate-900 mb-3">Summary</h4>
                     <div className="space-y-2 text-sm">
-                      <div className="flex justify-between p-2 hover:bg-gray-800 rounded">
-                        <span className="text-gray-400">Total Records</span>
-                        <span className="text-orange-400">{analytics.totalRecords}</span>
+                      <div className="flex justify-between p-2 hover:bg-slate-100 rounded">
+                        <span className="text-slate-600">Total Records</span>
+                        <span className="text-orange-600">{analytics.totalRecords}</span>
                       </div>
-                      <div className="flex justify-between p-2 hover:bg-gray-800 rounded">
-                        <span className="text-gray-400">Present</span>
-                        <span className="text-green-400">{analytics.presentCount || 0}</span>
+                      <div className="flex justify-between p-2 hover:bg-slate-100 rounded">
+                        <span className="text-slate-600">Present</span>
+                        <span className="text-green-600">{analytics.presentCount || 0}</span>
                       </div>
-                      <div className="flex justify-between p-2 hover:bg-gray-800 rounded">
-                        <span className="text-gray-400">Absent</span>
-                        <span className="text-red-400">{analytics.absentCount || 0}</span>
+                      <div className="flex justify-between p-2 hover:bg-slate-100 rounded">
+                        <span className="text-slate-600">Absent</span>
+                        <span className="text-red-600">{analytics.absentCount || 0}</span>
                       </div>
                     </div>
                   </div>

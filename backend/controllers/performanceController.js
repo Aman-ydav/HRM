@@ -1,6 +1,7 @@
 // controllers/performanceController.js
 // Performance Controller
 
+import mongoose from 'mongoose';
 import Performance from '../models/Performance.js';
 import Employee from '../models/Employee.js';
 import { sendSuccess, sendError, sendPaginatedResponse } from '../utils/responseUtils.js';
@@ -142,42 +143,47 @@ export const getPerformanceAnalytics = async (req, res, next) => {
       }
     }
 
-    const employee = await Employee.findById(employeeId);
-    if (!employee) {
-      return sendError(res, 'Employee not found', 404);
-    }
+    // Validate employee exists
+    const employee = await Employee.findById(employeeId).select('_id');
+    if (!employee) return sendError(res, 'Employee not found', 404);
 
-    const performances = await Performance.find({ employeeId }).sort({
-      'reviewPeriod.startDate': -1,
-    });
+    // Aggregate averages server-side for efficiency
+    const agg = await Performance.aggregate([
+      { $match: { employeeId: mongoose.Types.ObjectId(employeeId) } },
+      {
+        $group: {
+          _id: '$employeeId',
+          totalReviews: { $sum: 1 },
+          averageTaskCompletion: { $avg: '$taskCompletionRate' },
+          averageProductivity: { $avg: '$productivityScore' },
+          averageCollaboration: { $avg: '$teamCollaborationScore' },
+          averageRating: { $avg: '$monthlyRating' },
+          averageOverall: { $avg: '$overallPerformance' },
+        },
+      },
+    ]);
 
-    if (performances.length === 0) {
+    if (!agg || agg.length === 0) {
       return sendSuccess(res, {}, 'No performance data available', 200);
     }
 
-    const averageTaskCompletion =
-      performances.reduce((sum, p) => sum + p.taskCompletionRate, 0) /
-      performances.length;
-    const averageProductivity =
-      performances.reduce((sum, p) => sum + p.productivityScore, 0) /
-      performances.length;
-    const averageCollaboration =
-      performances.reduce((sum, p) => sum + p.teamCollaborationScore, 0) /
-      performances.length;
-    const averageRating =
-      performances.reduce((sum, p) => sum + p.monthlyRating, 0) / performances.length;
-    const averagePerformance =
-      performances.reduce((sum, p) => sum + p.overallPerformance, 0) /
-      performances.length;
+    const stats = agg[0];
+
+    // Get last 6 reviews for trend
+    const trend = await Performance.find({ employeeId })
+      .sort({ 'reviewPeriod.startDate': -1 })
+      .limit(6)
+      .select('reviewPeriod monthlyRating overallPerformance taskCompletionRate')
+      .lean();
 
     const analytics = {
-      totalReviews: performances.length,
-      averageTaskCompletion: Math.round(averageTaskCompletion * 100) / 100,
-      averageProductivity: Math.round(averageProductivity * 100) / 100,
-      averageCollaboration: Math.round(averageCollaboration * 100) / 100,
-      averageRating: Math.round(averageRating * 100) / 100,
-      averagePerformance: Math.round(averagePerformance * 100) / 100,
-      trend: performances.slice(0, 6).reverse(),
+      totalReviews: stats.totalReviews,
+      averageTaskCompletion: Math.round(stats.averageTaskCompletion * 100) / 100,
+      averageProductivity: Math.round(stats.averageProductivity * 100) / 100,
+      averageCollaboration: Math.round(stats.averageCollaboration * 100) / 100,
+      averageRating: Math.round(stats.averageRating * 100) / 100,
+      averagePerformance: Math.round(stats.averageOverall * 100) / 100,
+      trend: trend.reverse(),
     };
 
     return sendSuccess(res, analytics, 'Performance analytics fetched successfully', 200);
@@ -209,47 +215,52 @@ export const getTopPerformers = async (req, res, next) => {
 export const getDepartmentPerformance = async (req, res, next) => {
   try {
     const { department } = req.params;
-
-    const employees = await Employee.find({ department });
+    // Use aggregation to compute department-level stats efficiently
+    const employees = await Employee.find({ department }).select('_id firstName lastName');
     const employeeIds = employees.map((e) => e._id);
 
-    const performances = await Performance.find({
-      employeeId: { $in: employeeIds },
-    });
+    if (employeeIds.length === 0) {
+      return sendSuccess(res, { department, totalEmployees: 0, totalReviews: 0, averagePerformance: 0, employees: [] }, 'No employees in department', 200);
+    }
 
-    const avgPerformance =
-      performances.length > 0
-        ? Math.round(
-            (performances.reduce((sum, p) => sum + p.overallPerformance, 0) /
-              performances.length) *
-              100
-          ) / 100
-        : 0;
+    const perfAgg = await Performance.aggregate([
+      { $match: { employeeId: { $in: employeeIds } } },
+      {
+        $group: {
+          _id: '$employeeId',
+          avgPerformance: { $avg: '$overallPerformance' },
+          reviewCount: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const totalReviews = perfAgg.reduce((sum, p) => sum + (p.reviewCount || 0), 0);
+    const averagePerformance = perfAgg.length > 0
+      ? Math.round((perfAgg.reduce((sum, p) => sum + (p.avgPerformance || 0), 0) / perfAgg.length) * 100) / 100
+      : 0;
+
+    const employeesMap = new Map(employees.map(e => [e._id.toString(), e]));
+
+    const employeesList = employeeIds.map(id => {
+      const agg = perfAgg.find(p => p._id.toString() === id.toString());
+      const emp = employeesMap.get(id.toString());
+      return {
+        employeeId: id,
+        name: emp ? `${emp.firstName} ${emp.lastName}` : 'Unknown',
+        performance: agg ? Math.round((agg.avgPerformance || 0) * 100) / 100 : 0,
+        reviewCount: agg ? agg.reviewCount : 0,
+      };
+    });
 
     const deptAnalytics = {
       department,
       totalEmployees: employeeIds.length,
-      totalReviews: performances.length,
-      averagePerformance: avgPerformance,
-      employees: employeeIds.map((id) => {
-        const emp = employees.find((e) => e._id.toString() === id.toString());
-        const perf = performances.find(
-          (p) => p.employeeId.toString() === id.toString()
-        );
-        return {
-          employeeId: id,
-          name: `${emp.firstName} ${emp.lastName}`,
-          performance: perf?.overallPerformance || 0,
-        };
-      }),
+      totalReviews,
+      averagePerformance,
+      employees: employeesList,
     };
 
-    return sendSuccess(
-      res,
-      deptAnalytics,
-      'Department performance fetched successfully',
-      200
-    );
+    return sendSuccess(res, deptAnalytics, 'Department performance fetched successfully', 200);
   } catch (error) {
     console.error('Get department performance error:', error);
     next(error);

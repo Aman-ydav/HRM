@@ -31,19 +31,19 @@ function ForgotPasswordPage() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Forgot Password?</h2>
-        <p className="text-gray-400">Enter your email and we'll send you a link to reset it</p>
+        <h2 className="text-2xl font-bold text-slate-900 mb-2">Forgot Password?</h2>
+        <p className="text-slate-600">Enter your email and we'll send you a link to reset it</p>
       </div>
 
       {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-          <p className="text-red-400 text-sm">{error}</p>
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-700 text-sm">{error}</p>
         </div>
       )}
 
       {success && (
-        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
-          <p className="text-green-400 text-sm">{success}</p>
+        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-green-700 text-sm">{success}</p>
         </div>
       )}
 
@@ -67,8 +67,8 @@ function ForgotPasswordPage() {
       </Button>
 
       <div className="text-center text-sm">
-        <span className="text-gray-400">Remember your password? </span>
-        <Link to="/login" className="text-orange-500 hover:underline">Sign in</Link>
+        <span className="text-slate-600">Remember your password? </span>
+        <Link to="/login" className="text-orange-600 hover:underline">Sign in</Link>
       </div>
     </form>
   )

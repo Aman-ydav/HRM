@@ -120,8 +120,8 @@ function FeedbackPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Feedback</h1>
-          <p className="text-gray-400">Give and receive constructive feedback</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Feedback</h1>
+          <p className="text-slate-600">Give and receive constructive feedback</p>
         </div>
         <Button variant="primary" onClick={() => setSubmitModalOpen(true)}>
           <Send size={16} className="mr-2" />
@@ -135,7 +135,7 @@ function FeedbackPage() {
         </div>
       )}
 
-      <div className="flex gap-2 border-b border-gray-800">
+      <div className="flex gap-2 border-b border-slate-200">
         {['received', 'given', 'analytics'].map((tab) => (
           <button
             key={tab}
@@ -143,7 +143,7 @@ function FeedbackPage() {
             className={`px-4 py-2 border-b-2 transition-colors ${
               activeTab === tab
                 ? 'border-orange-500 text-orange-500'
-                : 'border-transparent text-gray-400 hover:text-white'
+                : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
             {tab === 'received' && 'Received'}
@@ -166,14 +166,14 @@ function FeedbackPage() {
                   <Card key={fb._id || idx}>
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <p className="font-bold text-white">
+                        <p className="font-bold text-slate-900">
                           {fb.sender?.firstName} {fb.sender?.lastName}
                         </p>
-                        <p className="text-xs text-gray-400">{new Date(fb.createdAt).toLocaleDateString()}</p>
+                        <p className="text-xs text-slate-600">{new Date(fb.createdAt).toLocaleDateString()}</p>
                       </div>
                       <Badge variant={getRatingColor(fb.rating)}>{fb.rating}/5</Badge>
                     </div>
-                    <p className="text-gray-300 mb-3">{fb.comment}</p>
+                    <p className="text-slate-700 mb-3">{fb.comment}</p>
                     <div className="flex items-center gap-2">
                       <Badge variant="default">{fb.category?.replace('_', ' ')}</Badge>
                       {fb.isPositive && <Badge variant="green">Positive</Badge>}
@@ -182,7 +182,7 @@ function FeedbackPage() {
                 ))
               ) : (
                 <Card>
-                  <p className="text-gray-400 text-center py-12">No feedback received yet</p>
+                  <p className="text-slate-600 text-center py-12">No feedback received yet</p>
                 </Card>
               )}
             </div>
@@ -195,18 +195,18 @@ function FeedbackPage() {
                   <Card key={fb._id || idx}>
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <p className="font-bold text-white">To: {fb.receiver?.firstName} {fb.receiver?.lastName}</p>
-                        <p className="text-xs text-gray-400">{new Date(fb.createdAt).toLocaleDateString()}</p>
+                        <p className="font-bold text-slate-900">To: {fb.receiver?.firstName} {fb.receiver?.lastName}</p>
+                        <p className="text-xs text-slate-600">{new Date(fb.createdAt).toLocaleDateString()}</p>
                       </div>
                       <Badge variant={getRatingColor(fb.rating)}>{fb.rating}/5</Badge>
                     </div>
-                    <p className="text-gray-300 mb-3">{fb.comment}</p>
+                    <p className="text-slate-700 mb-3">{fb.comment}</p>
                     <Badge variant="default">{fb.category?.replace('_', ' ')}</Badge>
                   </Card>
                 ))
               ) : (
                 <Card>
-                  <p className="text-gray-400 text-center py-12">No feedback given yet</p>
+                  <p className="text-slate-600 text-center py-12">No feedback given yet</p>
                 </Card>
               )}
             </div>
@@ -215,29 +215,29 @@ function FeedbackPage() {
           {activeTab === 'analytics' && analytics && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
-                <h3 className="font-bold text-white mb-4">Overall Statistics</h3>
+                <h3 className="font-bold text-slate-900 mb-4">Overall Statistics</h3>
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center p-2 hover:bg-gray-800 rounded">
-                    <span className="text-gray-400">Average Rating</span>
-                    <span className="text-xl font-bold text-orange-400">{analytics.averageRating?.toFixed(1) || 0}/5</span>
+                  <div className="flex justify-between items-center p-2 hover:bg-slate-100 rounded">
+                    <span className="text-slate-600">Average Rating</span>
+                    <span className="text-xl font-bold text-orange-600">{analytics.averageRating?.toFixed(1) || 0}/5</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 hover:bg-gray-800 rounded">
-                    <span className="text-gray-400">Total Feedback</span>
-                    <span className="text-xl font-bold text-orange-400">{analytics.totalFeedback || 0}</span>
+                  <div className="flex justify-between items-center p-2 hover:bg-slate-100 rounded">
+                    <span className="text-slate-600">Total Feedback</span>
+                    <span className="text-xl font-bold text-orange-600">{analytics.totalFeedback || 0}</span>
                   </div>
-                  <div className="flex justify-between items-center p-2 hover:bg-gray-800 rounded">
-                    <span className="text-gray-400">Positive %</span>
-                    <span className="text-xl font-bold text-green-400">{analytics.positivePercentage?.toFixed(1) || 0}%</span>
+                  <div className="flex justify-between items-center p-2 hover:bg-slate-100 rounded">
+                    <span className="text-slate-600">Positive %</span>
+                    <span className="text-xl font-bold text-green-600">{analytics.positivePercentage?.toFixed(1) || 0}%</span>
                   </div>
                 </div>
               </Card>
 
               <Card>
-                <h3 className="font-bold text-white mb-4">By Category</h3>
+                <h3 className="font-bold text-slate-900 mb-4">By Category</h3>
                 <div className="space-y-2">
                   {analytics.byCategory && Object.entries(analytics.byCategory).map(([cat, details]) => (
-                    <div key={cat} className="flex justify-between items-center p-2 hover:bg-gray-800 rounded">
-                      <span className="text-gray-400 capitalize">{cat.replace('_', ' ')}</span>
+                    <div key={cat} className="flex justify-between items-center p-2 hover:bg-slate-100 rounded">
+                      <span className="text-slate-600 capitalize">{cat.replace('_', ' ')}</span>
                       <Badge variant="orange">{details.count}</Badge>
                     </div>
                   ))}
@@ -261,11 +261,11 @@ function FeedbackPage() {
       >
         <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
           <div className="w-full">
-            <label className="block text-sm font-medium text-gray-300 mb-2">To (Employee)</label>
+            <label className="block text-sm font-medium text-slate-900 mb-2">To (Employee)</label>
             <select
               value={newFeedback.receiverId}
               onChange={(e) => setNewFeedback({ ...newFeedback, receiverId: e.target.value })}
-              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white"
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded text-slate-900"
               required
             >
               <option value="">Select employee</option>
@@ -278,7 +278,7 @@ function FeedbackPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-300">Rating</label>
+            <label className="block text-sm font-medium text-slate-900">Rating</label>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((rating) => (
                 <button
@@ -287,8 +287,8 @@ function FeedbackPage() {
                   onClick={() => setNewFeedback({ ...newFeedback, rating })}
                   className={`px-4 py-2 rounded transition ${
                     newFeedback.rating === rating
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-gray-800 text-gray-400 hover:text-white'
+                      ? 'bg-orange-600 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                   }`}
                 >
                   {rating}
@@ -298,11 +298,11 @@ function FeedbackPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Category</label>
+            <label className="block text-sm font-medium text-slate-900 mb-2">Category</label>
             <select
               value={newFeedback.category}
               onChange={(e) => setNewFeedback({ ...newFeedback, category: e.target.value })}
-              className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded text-white"
+              className="w-full px-3 py-2 bg-white border border-slate-200 rounded text-slate-900"
             >
               <option value="work_quality">Work Quality</option>
               <option value="collaboration">Collaboration</option>

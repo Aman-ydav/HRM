@@ -34,14 +34,35 @@ export const REWARD_TYPE = {
   BONUS: 'bonus',
   BADGE: 'badge',
   EMPLOYEE_OF_MONTH: 'employee_of_month',
+  CERTIFICATE: 'certificate',
+  PROMOTION: 'promotion',
+  FLEXIBLE_TIME: 'flexible_time',
+  LEARNING_BUDGET: 'learning_budget',
 };
 
 export const BADGE_TYPES = {
+  EXCELLENCE: 'excellence',
+  TEAMWORK: 'teamwork',
+  INNOVATION: 'innovation',
+  CUSTOMER_FOCUS: 'customer_focus',
+  LEADERSHIP: 'leadership',
+  GROWTH: 'growth',
+  RELIABILITY: 'reliability',
+  CREATIVITY: 'creativity',
   HIGH_ATTENDANCE: 'high_attendance',
   HIGH_PRODUCTIVITY: 'high_productivity',
   TEAM_PLAYER: 'team_player',
   INNOVATOR: 'innovator',
   LEADER: 'leader',
+};
+
+export const DEPARTMENTS = {
+  ENGINEERING: 'Engineering',
+  SALES: 'Sales',
+  MARKETING: 'Marketing',
+  OPERATIONS: 'Operations',
+  HUMAN_RESOURCES: 'Human Resources',
+  FINANCE: 'Finance',
 };
 
 export const PERFORMANCE_RATING = {

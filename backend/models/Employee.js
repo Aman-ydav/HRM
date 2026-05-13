@@ -2,6 +2,7 @@
 // Employee Model for Employee Profile Information
 
 import mongoose from 'mongoose';
+import { BADGE_TYPES } from '../constants/index.js';
 
 const employeeSchema = new mongoose.Schema(
   {
@@ -91,13 +92,7 @@ const employeeSchema = new mongoose.Schema(
     badges: [
       {
         type: String,
-        enum: [
-          'high_attendance',
-          'high_productivity',
-          'team_player',
-          'innovator',
-          'leader',
-        ],
+        enum: Object.values(BADGE_TYPES),
       },
     ],
     manager: {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Card, Badge, LoadingSpinner } from '../../components/ui'
+import Chart from '../../components/ui/Chart'
 import { performanceService } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
 import { TrendingUp, BarChart3 } from 'lucide-react'
@@ -17,6 +18,7 @@ function PerformancePage() {
   const [reviews, setReviews] = useState([])
   const [analytics, setAnalytics] = useState(null)
   const [topPerformers, setTopPerformers] = useState([])
+  const [departmentAnalytics, setDepartmentAnalytics] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -44,6 +46,11 @@ function PerformancePage() {
           const response = await performanceService.getTopPerformers(10)
           setTopPerformers(response?.data || [])
         }
+
+        if (employee?.department && activeTab !== 'history') {
+          const deptResponse = await performanceService.getDepartmentAnalytics(employee.department)
+          setDepartmentAnalytics(deptResponse?.data || null)
+        }
       } catch (err) {
         setError(err.message || 'Failed to load performance data')
       } finally {
@@ -52,7 +59,7 @@ function PerformancePage() {
     }
 
     fetchData()
-  }, [activeTab, employeeId, isEmployee])
+  }, [activeTab, employeeId, employee?.department, isEmployee])
 
   if (!isEmployee) {
     return <Navigate to={fallbackRoute} replace />
@@ -199,6 +206,47 @@ function PerformancePage() {
                   </div>
                 )}
               </Card>
+
+              {departmentAnalytics && (
+                <Card>
+                  <div className="flex items-center gap-2 mb-6">
+                    <TrendingUp className="text-orange-500" />
+                    <h3 className="text-lg font-bold text-slate-900">Department Snapshot</h3>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div className="p-4 bg-slate-50 rounded">
+                      <p className="text-slate-600 text-sm">Department Avg</p>
+                      <p className="text-2xl font-bold text-orange-600">{departmentAnalytics.averagePerformance?.toFixed(1) || 0}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded">
+                      <p className="text-slate-600 text-sm">Employees</p>
+                      <p className="text-2xl font-bold text-slate-900">{departmentAnalytics.totalEmployees || 0}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded">
+                      <p className="text-slate-600 text-sm">Reviews</p>
+                      <p className="text-2xl font-bold text-sky-600">{departmentAnalytics.totalReviews || 0}</p>
+                    </div>
+                    <div className="p-4 bg-slate-50 rounded">
+                      <p className="text-slate-600 text-sm">Your Dept</p>
+                      <p className="text-lg font-bold text-slate-900">{departmentAnalytics.department}</p>
+                    </div>
+                  </div>
+
+                  <Chart
+                    labels={departmentAnalytics.employees?.slice(0, 5).map((emp) => emp.name) || []}
+                    datasets={[
+                      {
+                        label: 'Peer Performance',
+                        data: departmentAnalytics.employees?.slice(0, 5).map((emp) => emp.performance || 0) || [],
+                        backgroundColor: 'rgba(249, 115, 22, 0.75)',
+                        borderRadius: 10,
+                      },
+                    ]}
+                    options={{ responsive: true, plugins: { legend: { position: 'top' } } }}
+                  />
+                </Card>
+              )}
             </div>
           )}
 

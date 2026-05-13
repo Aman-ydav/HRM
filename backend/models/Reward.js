@@ -2,6 +2,7 @@
 // Reward Model for Managing Rewards, Bonuses, and Badges
 
 import mongoose from 'mongoose';
+import { REWARD_TYPE, BADGE_TYPES } from '../constants/index.js';
 
 const rewardSchema = new mongoose.Schema(
   {
@@ -12,7 +13,7 @@ const rewardSchema = new mongoose.Schema(
     },
     rewardType: {
       type: String,
-      enum: ['points', 'bonus', 'badge', 'employee_of_month'],
+      enum: Object.values(REWARD_TYPE),
       required: true,
     },
     points: {
@@ -27,13 +28,7 @@ const rewardSchema = new mongoose.Schema(
     },
     badge: {
       type: String,
-      enum: [
-        'high_attendance',
-        'high_productivity',
-        'team_player',
-        'innovator',
-        'leader',
-      ],
+      enum: Object.values(BADGE_TYPES),
       default: null,
     },
     reason: {

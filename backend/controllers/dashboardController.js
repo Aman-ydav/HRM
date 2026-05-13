@@ -45,6 +45,33 @@ export const getAdminDashboard = async (req, res, next) => {
       { $group: { _id: '$rewardType', count: { $sum: 1 }, total: { $sum: '$bonus' } } },
     ]);
 
+    const rewardsByDepartment = await Reward.aggregate([
+      { $match: { approvalStatus: 'approved' } },
+      {
+        $lookup: {
+          from: 'employees',
+          localField: 'employeeId',
+          foreignField: '_id',
+          as: 'employee',
+        },
+      },
+      { $unwind: '$employee' },
+      {
+        $group: {
+          _id: '$employee.department',
+          count: { $sum: 1 },
+          points: { $sum: '$points' },
+          bonus: { $sum: '$bonus' },
+          badgeCount: {
+            $sum: {
+              $cond: [{ $eq: ['$rewardType', 'badge'] }, 1, 0],
+            },
+          },
+        },
+      },
+      { $sort: { count: -1 } },
+    ]);
+
     // Get total bonus distributed
     const totalBonusDistributed = await Reward.aggregate([
       { $match: { rewardType: 'bonus', approvalStatus: 'approved' } },
@@ -70,6 +97,7 @@ export const getAdminDashboard = async (req, res, next) => {
       rewards: {
         totalBonusDistributed: totalBonusDistributed[0]?.total || 0,
         byType: rewardsByType,
+        byDepartment: rewardsByDepartment,
       },
     };
 
@@ -153,11 +181,29 @@ export const getDepartmentAnalytics = async (req, res, next) => {
           { $group: { _id: null, avg: { $avg: '$overallPerformance' } } },
         ]);
 
+        const rewardSummary = await Reward.aggregate([
+          { $match: { approvalStatus: 'approved', employeeId: { $in: employeeIds } } },
+          {
+            $group: {
+              _id: null,
+              rewardCount: { $sum: 1 },
+              totalPoints: { $sum: '$points' },
+              totalBonus: { $sum: '$bonus' },
+              badgeCount: {
+                $sum: {
+                  $cond: [{ $eq: ['$rewardType', 'badge'] }, 1, 0],
+                },
+              },
+            },
+          },
+        ]);
+
         return {
           department: dept,
           totalEmployees: employeeIds.length,
           averageRewardPoints: avgRewardPoints,
           averagePerformance: avgPerformance[0]?.avg || 0,
+          rewardSummary: rewardSummary[0] || { rewardCount: 0, totalPoints: 0, totalBonus: 0, badgeCount: 0 },
         };
       })
     );
@@ -215,7 +261,7 @@ export const getRewardAnalytics = async (req, res, next) => {
       query.month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     }
 
-    const rewards = await Reward.find(query);
+    const rewards = await Reward.find(query).populate('employeeId', 'department');
 
     const byType = {};
     const byEmployee = {};
@@ -227,18 +273,41 @@ export const getRewardAnalytics = async (req, res, next) => {
       byType[r.rewardType].count += 1;
       byType[r.rewardType].total += r.bonus || r.points || 0;
 
-      if (!byEmployee[r.employeeId]) {
-        byEmployee[r.employeeId] = { count: 0, points: 0, bonus: 0 };
+      if (!byEmployee[r.employeeId?._id?.toString()]) {
+        byEmployee[r.employeeId?._id?.toString()] = { count: 0, points: 0, bonus: 0 };
       }
-      byEmployee[r.employeeId].count += 1;
-      byEmployee[r.employeeId].points += r.points || 0;
-      byEmployee[r.employeeId].bonus += r.bonus || 0;
+      byEmployee[r.employeeId?._id?.toString()].count += 1;
+      byEmployee[r.employeeId?._id?.toString()].points += r.points || 0;
+      byEmployee[r.employeeId?._id?.toString()].bonus += r.bonus || 0;
     });
+
+    const byDepartment = await Reward.aggregate([
+      { $match: query },
+      {
+        $lookup: {
+          from: 'employees',
+          localField: 'employeeId',
+          foreignField: '_id',
+          as: 'employee',
+        },
+      },
+      { $unwind: '$employee' },
+      {
+        $group: {
+          _id: '$employee.department',
+          count: { $sum: 1 },
+          points: { $sum: '$points' },
+          bonus: { $sum: '$bonus' },
+        },
+      },
+      { $sort: { count: -1 } },
+    ]);
 
     const analytics = {
       month: query.month,
       totalRewards: rewards.length,
       byType,
+      byDepartment,
       topEmployees: Object.entries(byEmployee)
         .map(([empId, data]) => ({
           employeeId: empId,

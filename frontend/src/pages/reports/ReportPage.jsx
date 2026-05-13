@@ -14,6 +14,7 @@ function ReportPage() {
   const fallbackRoute = getDefaultRouteForRole(user?.role)
 
   const [report, setReport] = useState(null)
+  const [departmentReport, setDepartmentReport] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -31,6 +32,11 @@ function ReportPage() {
 
         const response = await reportService.getEmployeeReport(employee._id)
         setReport(response?.data || null)
+
+        if (employee.department) {
+          const deptResponse = await reportService.getDepartmentReport(employee.department)
+          setDepartmentReport(deptResponse?.data || null)
+        }
       } catch (err) {
         setError(err.message || 'Failed to load report')
       } finally {
@@ -39,7 +45,7 @@ function ReportPage() {
     }
 
     fetchReport()
-  }, [employee?._id, isEmployee])
+  }, [employee?._id, employee?.department, isEmployee])
 
   if (!isEmployee) {
     return <Navigate to={fallbackRoute} replace />
@@ -160,6 +166,67 @@ function ReportPage() {
           </div>
         </div>
       </Card>
+
+      {departmentReport && (
+        <Card>
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="text-orange-500" />
+            <h3 className="text-lg font-bold text-slate-900">Department Comparison</h3>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div className="p-3 bg-slate-50 rounded">
+              <p className="text-xs text-slate-600">Your Score</p>
+              <p className="text-xl font-bold text-orange-600">{report.score}</p>
+            </div>
+            <div className="p-3 bg-slate-50 rounded">
+              <p className="text-xs text-slate-600">Department Avg</p>
+              <p className="text-xl font-bold text-sky-600">{departmentReport.averageScore?.toFixed(1) || 0}</p>
+            </div>
+            <div className="p-3 bg-slate-50 rounded">
+              <p className="text-xs text-slate-600">Peers</p>
+              <p className="text-xl font-bold text-slate-900">{departmentReport.totalEmployees || 0}</p>
+            </div>
+            <div className="p-3 bg-slate-50 rounded">
+              <p className="text-xs text-slate-600">Department</p>
+              <p className="text-xl font-bold text-slate-900">{departmentReport.department}</p>
+            </div>
+          </div>
+
+          <div>
+            <Bar
+              data={{
+                labels: ['You', 'Dept Avg', 'Top Peer'],
+                datasets: [
+                  {
+                    label: 'Score',
+                    data: [
+                      report.score || 0,
+                      departmentReport.averageScore || 0,
+                      Math.max(...(departmentReport.employees || []).map((emp) => emp.score || 0), 0),
+                    ],
+                    backgroundColor: ['rgba(249, 115, 22, 0.85)', 'rgba(59, 130, 246, 0.85)', 'rgba(16, 185, 129, 0.85)'],
+                    borderRadius: 10,
+                  },
+                ],
+              }}
+              options={{ responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }}
+            />
+          </div>
+
+          <div className="mt-6">
+            <h4 className="font-bold text-slate-900 mb-3">Department Peers</h4>
+            <div className="space-y-2">
+              {(departmentReport.employees || []).slice(0, 5).map((emp) => (
+                <div key={emp.employeeId} className="flex items-center justify-between p-3 bg-slate-50 rounded">
+                  <span className="text-slate-900">{emp.name}</span>
+                  <Badge variant={emp.category === 'top' ? 'green' : emp.category === 'middle' ? 'blue' : 'red'}>{emp.score}</Badge>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Key Metrics */}
       <Card>

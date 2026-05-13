@@ -107,6 +107,8 @@ export const rewardService = {
   getBonusHistory: (employeeId) =>
     apiClient.get(`/rewards/bonus-history/${employeeId}`),
   getByType: (type) => apiClient.get('/rewards/by-type', { params: { type } }),
+  getByDepartment: (month = '') => apiClient.get('/rewards/by-department', { params: { month } }),
+  getBadgeAnalytics: (month = '') => apiClient.get('/rewards/badges', { params: { month } }),
 }
 
 export const feedbackService = {

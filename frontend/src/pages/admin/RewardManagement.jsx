@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Card, Button, Input, Select, Badge, LoadingSpinner, Modal, Textarea } from '../../components/ui'
 import { rewardService, employeeService } from '../../lib/api'
 import { Check, X, Eye } from 'lucide-react'
+import { REWARD_TYPES, BADGE_DETAILS, getRewardTypeLabel, getDepartmentLabel } from '../../constants/enums'
 
 function RewardManagement() {
   const [activeTab, setActiveTab] = useState('pending')
@@ -18,8 +19,13 @@ function RewardManagement() {
     rewardType: 'points',
     points: '',
     bonus: '',
+    badge: '',
     reason: '',
   })
+
+  const selectedEmployee = employees.find((emp) => emp._id === newRewardForm.employeeId)
+  const rewardTypeOptions = Object.values(REWARD_TYPES)
+  const badgeOptions = Object.values(BADGE_DETAILS)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -63,10 +69,11 @@ function RewardManagement() {
         rewardType: newRewardForm.rewardType,
         points: newRewardForm.rewardType === 'points' ? parseInt(newRewardForm.points) : undefined,
         bonus: newRewardForm.rewardType === 'bonus' ? parseInt(newRewardForm.bonus) : undefined,
+        badge: newRewardForm.rewardType === 'badge' ? newRewardForm.badge : undefined,
         reason: newRewardForm.reason,
         month: new Date().toISOString().slice(0, 7),
       })
-      setNewRewardForm({ employeeId: '', rewardType: 'points', points: '', bonus: '', reason: '' })
+      setNewRewardForm({ employeeId: '', rewardType: 'points', points: '', bonus: '', badge: '', reason: '' })
       const data = await rewardService.getAllRewards(1, 100, '', '', '', '')
       setRewards(data.data || [])
     } catch (err) {
@@ -126,11 +133,21 @@ function RewardManagement() {
               value={newRewardForm.rewardType}
               onChange={(e) => setNewRewardForm({ ...newRewardForm, rewardType: e.target.value })}
             >
-              <option value="points">Points</option>
-              <option value="bonus">Bonus</option>
-              <option value="badge">Badge</option>
-              <option value="employee_of_month">Employee of Month</option>
+              {rewardTypeOptions.map((reward) => (
+                <option key={reward.value} value={reward.value}>
+                  {reward.icon} {reward.label}
+                </option>
+              ))}
             </Select>
+
+            {selectedEmployee && (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 md:col-span-3">
+                <p className="text-sm text-slate-600">Selected employee department</p>
+                <p className="font-semibold text-slate-900">
+                  {selectedEmployee.firstName} {selectedEmployee.lastName} · {getDepartmentLabel(selectedEmployee.department)}
+                </p>
+              </div>
+            )}
 
             {newRewardForm.rewardType === 'points' ? (
               <Input
@@ -142,7 +159,7 @@ function RewardManagement() {
                 min="0"
                 max="500"
               />
-            ) : (
+            ) : newRewardForm.rewardType === 'bonus' ? (
               <Input
                 label="Bonus Amount ($)"
                 type="number"
@@ -152,7 +169,26 @@ function RewardManagement() {
                 min="0"
                 max="100000"
               />
+            ) : newRewardForm.rewardType === 'badge' ? (
+              <Select
+                label="Badge"
+                value={newRewardForm.badge}
+                onChange={(e) => setNewRewardForm({ ...newRewardForm, badge: e.target.value })}
+              >
+                <option value="">Select Badge</option>
+                {badgeOptions.map((badge) => (
+                  <option key={badge.name} value={badge.name.toLowerCase().replace(/\s+/g, '_')}>
+                    {badge.icon} {badge.name} - {badge.department}
+                  </option>
+                ))}
+              </Select>
+            ) : (
+              <div className="md:col-span-3 rounded-lg border border-orange-200 bg-orange-50 p-3">
+                <p className="text-sm font-medium text-orange-700">Recognition reward</p>
+                <p className="text-sm text-orange-600">This reward uses the reason field and does not require points or bonus values.</p>
+              </div>
             )}
+
           </div>
 
           <Textarea
@@ -200,9 +236,12 @@ function RewardManagement() {
                     <h4 className="font-bold text-slate-900">
                       {reward.employeeId?.firstName} {reward.employeeId?.lastName}
                     </h4>
-                    <Badge variant={reward.rewardType === 'points' ? 'orange' : 'green'}>
-                      {reward.rewardType}
+                    <Badge variant={reward.rewardType === 'points' ? 'orange' : reward.rewardType === 'bonus' ? 'green' : reward.rewardType === 'badge' ? 'blue' : 'default'}>
+                      {getRewardTypeLabel(reward.rewardType)}
                     </Badge>
+                    {reward.employeeId?.department && (
+                      <Badge variant="default">{getDepartmentLabel(reward.employeeId.department)}</Badge>
+                    )}
                   </div>
                   <p className="text-slate-600 mb-2">{reward.reason}</p>
                   <div className="flex gap-3 text-sm">
@@ -278,7 +317,7 @@ function RewardManagement() {
             <div>
               <p className="text-slate-600 text-sm">Reward</p>
               <p className="font-bold text-slate-900">
-                {selectedReward.employeeId?.firstName} {selectedReward.employeeId?.lastName} - {selectedReward.rewardType}
+                {selectedReward.employeeId?.firstName} {selectedReward.employeeId?.lastName} - {getRewardTypeLabel(selectedReward.rewardType)}
               </p>
             </div>
             <div>

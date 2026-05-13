@@ -149,7 +149,7 @@ export const getPerformanceAnalytics = async (req, res, next) => {
 
     // Aggregate averages server-side for efficiency
     const agg = await Performance.aggregate([
-      { $match: { employeeId: mongoose.Types.ObjectId(employeeId) } },
+      { $match: { employeeId: new mongoose.Types.ObjectId(employeeId) } },
       {
         $group: {
           _id: '$employeeId',

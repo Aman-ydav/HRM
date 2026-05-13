@@ -38,7 +38,7 @@ export const getEmployeeReport = async (req, res, next) => {
     }
 
     const statsAgg = await Performance.aggregate([
-      { $match: { employeeId: mongoose.Types.ObjectId(employeeId) } },
+      { $match: { employeeId: new mongoose.Types.ObjectId(employeeId) } },
       {
         $group: {
           _id: '$employeeId',

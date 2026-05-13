@@ -10,6 +10,8 @@ import {
   getRewardLeaderboard,
   getBonusHistory,
   getRewardsByType,
+  getRewardsByDepartment,
+  getBadgeAnalytics,
 } from '../controllers/rewardController.js';
 import { protect, authorize } from '../middleware/auth.js';
 
@@ -28,5 +30,7 @@ router.get('/employee/:employeeId', getRewards);
 router.get('/leaderboard', getRewardLeaderboard);
 router.get('/bonus-history/:employeeId', getBonusHistory);
 router.get('/by-type', authorize('admin', 'hr_manager'), getRewardsByType);
+router.get('/by-department', authorize('admin', 'hr_manager'), getRewardsByDepartment);
+router.get('/badges', authorize('admin', 'hr_manager'), getBadgeAnalytics);
 
 export default router;

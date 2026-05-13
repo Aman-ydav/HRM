@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Card, Button, LoadingSpinner } from '../../components/ui'
+import Chart from '../../components/ui/Chart'
 import DepartmentRewardChart from '../../components/DepartmentRewardChart'
 import DepartmentBadges from '../../components/DepartmentBadges'
 import { rewardService } from '../../lib/api'
@@ -11,14 +12,23 @@ function DepartmentRewardsPage() {
   const [error, setError] = useState('')
   const [selectedDept, setSelectedDept] = useState(null)
   const [activeTab, setActiveTab] = useState('overview')
+  const [byDepartment, setByDepartment] = useState([])
+  const [badgeAnalytics, setBadgeAnalytics] = useState([])
 
   useEffect(() => {
     const fetchRewards = async () => {
       setLoading(true)
       setError('')
       try {
-        const data = await rewardService.getAllRewards(1, 1000, '', '', '', '')
-        setRewards(data.data || [])
+        const [rewardsData, departmentData, badgeData] = await Promise.all([
+          rewardService.getAllRewards(1, 1000, '', '', '', ''),
+          rewardService.getByDepartment(),
+          rewardService.getBadgeAnalytics(),
+        ])
+
+        setRewards(rewardsData.data || [])
+        setByDepartment(departmentData.data || [])
+        setBadgeAnalytics(badgeData.data || [])
       } catch (err) {
         setError(err.message || 'Failed to load rewards')
       } finally {
@@ -30,13 +40,13 @@ function DepartmentRewardsPage() {
   }, [])
 
   const getDepartmentStats = (deptValue) => {
-    const deptRewards = rewards.filter(r => r.employee?.department === deptValue)
+    const deptRewards = rewards.filter(r => r.employeeId?.department === deptValue)
     return {
       totalRewards: deptRewards.length,
       totalPoints: deptRewards.reduce((sum, r) => sum + (r.points || 0), 0),
       totalBonus: deptRewards.reduce((sum, r) => sum + (r.bonus || 0), 0),
       avgPerEmployee: deptRewards.length > 0 
-        ? Math.round(deptRewards.reduce((sum, r) => sum + (r.points || 0), 0) / new Set(deptRewards.map(r => r.employee?._id)).size)
+        ? Math.round(deptRewards.reduce((sum, r) => sum + (r.points || 0), 0) / new Set(deptRewards.map(r => r.employeeId?._id)).size)
         : 0,
     }
   }
@@ -85,6 +95,57 @@ function DepartmentRewardsPage() {
       {activeTab === 'overview' && (
         <div className="space-y-6">
           <DepartmentRewardChart rewards={rewards} />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {byDepartment.length > 0 && (
+              <Card>
+                <h3 className="text-lg font-bold text-slate-900 mb-4">Department Reward Mix</h3>
+                <Chart
+                  labels={byDepartment.map((item) => item._id)}
+                  datasets={[
+                    {
+                      label: 'Rewards',
+                      data: byDepartment.map((item) => item.count || 0),
+                      backgroundColor: 'rgba(249, 115, 22, 0.8)',
+                    },
+                    {
+                      label: 'Badge Rewards',
+                      data: byDepartment.map((item) => item.badgeCount || 0),
+                      backgroundColor: 'rgba(168, 85, 247, 0.8)',
+                    },
+                  ]}
+                  options={{ responsive: true, plugins: { legend: { position: 'top' } } }}
+                />
+              </Card>
+            )}
+
+            {badgeAnalytics.length > 0 && (
+              <Card>
+                <h3 className="text-lg font-bold text-slate-900 mb-4">Badge Distribution</h3>
+                <Chart
+                  type="doughnut"
+                  labels={badgeAnalytics.map((item) => item._id || 'Unknown')}
+                  datasets={[
+                    {
+                      label: 'Badges',
+                      data: badgeAnalytics.map((item) => item.count || 0),
+                      backgroundColor: [
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(249, 115, 22, 0.8)',
+                        'rgba(168, 85, 247, 0.8)',
+                        'rgba(236, 72, 153, 0.8)',
+                        'rgba(14, 165, 233, 0.8)',
+                      ],
+                      borderColor: '#fff',
+                      borderWidth: 2,
+                    },
+                  ]}
+                  options={{ responsive: true, plugins: { legend: { position: 'bottom' } } }}
+                />
+              </Card>
+            )}
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {Object.values(DEPARTMENTS).map(dept => {
@@ -112,9 +173,9 @@ function DepartmentRewardsPage() {
       {/* By Department Tab */}
       {activeTab === 'departments' && (
         <div className="space-y-6">
-          {Object.values(DEPARTMENTS).map(dept => {
+            {Object.values(DEPARTMENTS).map(dept => {
             const stats = getDepartmentStats(dept.value)
-            const deptRewards = rewards.filter(r => r.employee?.department === dept.value)
+            const deptRewards = rewards.filter(r => r.employeeId?.department === dept.value)
             
             return (
               <Card key={dept.value}>
@@ -148,7 +209,7 @@ function DepartmentRewardsPage() {
                     <p className="font-medium text-slate-900 text-sm">Recent Rewards:</p>
                     {deptRewards.slice(0, 3).map((reward, idx) => (
                       <div key={idx} className="flex justify-between items-center p-2 bg-slate-50 rounded text-sm">
-                        <span className="text-slate-900">{reward.employee?.firstName} {reward.employee?.lastName}</span>
+                        <span className="text-slate-900">{reward.employeeId?.firstName} {reward.employeeId?.lastName}</span>
                         <span className="font-semibold text-orange-600">
                           {reward.points && `${reward.points} pts`}
                           {reward.bonus && `$${reward.bonus}`}

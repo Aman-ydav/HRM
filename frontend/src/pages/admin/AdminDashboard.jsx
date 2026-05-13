@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { Card, Badge, LoadingSpinner } from '../../components/ui'
 import Chart from '../../components/ui/Chart'
 import { dashboardService, performanceService } from '../../lib/api'
-import { BarChart3, Users, Gift, TrendingUp } from 'lucide-react'
+import { BarChart3, Users, Gift, TrendingUp, Sparkles, Layers3 } from 'lucide-react'
 
 function AdminDashboard() {
   const [dashboard, setDashboard] = useState(null)
   const [trends, setTrends] = useState([])
+  const [departmentAnalytics, setDepartmentAnalytics] = useState([])
+  const [rewardAnalytics, setRewardAnalytics] = useState(null)
   const [topPerformers, setTopPerformers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -20,9 +22,16 @@ function AdminDashboard() {
           performanceService.getTopPerformers(5),
         ])
 
+        const [departmentData, rewardData] = await Promise.all([
+          dashboardService.getDepartmentAnalytics(),
+          dashboardService.getRewardAnalytics(),
+        ])
+
         setDashboard(dash?.data || dash || null)
         setTrends(tr?.data || [])
         setTopPerformers(top?.data || [])
+        setDepartmentAnalytics(departmentData?.data || [])
+        setRewardAnalytics(rewardData?.data || null)
       } catch (err) {
         setError(err.message || 'Failed to load admin dashboard')
       } finally {
@@ -42,6 +51,12 @@ function AdminDashboard() {
   }
 
   const rewardBreakdown = Array.isArray(dashboard?.rewards?.byType) ? dashboard.rewards.byType : []
+  const rewardByType = Array.isArray(rewardAnalytics?.byType)
+    ? rewardAnalytics.byType
+    : Object.entries(rewardAnalytics?.byType || {}).map(([key, value]) => ({ _id: key, ...value }))
+  const rewardByDepartment = Array.isArray(rewardAnalytics?.byDepartment)
+    ? rewardAnalytics.byDepartment
+    : []
 
   return (
     <div className="space-y-6">
@@ -57,7 +72,7 @@ function AdminDashboard() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
+        <Card className="transition-transform hover:-translate-y-1 hover:shadow-md">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-slate-600 text-sm">Total Employees</p>
@@ -67,7 +82,7 @@ function AdminDashboard() {
           </div>
         </Card>
 
-        <Card>
+        <Card className="transition-transform hover:-translate-y-1 hover:shadow-md">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-slate-600 text-sm">Total Rewards</p>
@@ -77,7 +92,7 @@ function AdminDashboard() {
           </div>
         </Card>
 
-        <Card>
+        <Card className="transition-transform hover:-translate-y-1 hover:shadow-md">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-slate-600 text-sm">Total Bonus</p>
@@ -87,7 +102,7 @@ function AdminDashboard() {
           </div>
         </Card>
 
-        <Card>
+        <Card className="transition-transform hover:-translate-y-1 hover:shadow-md">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-slate-600 text-sm">Attendance Rate</p>
@@ -98,30 +113,127 @@ function AdminDashboard() {
         </Card>
       </div>
 
-      {trends.length > 0 && (
-        <Card>
-          <h3 className="text-lg font-bold text-slate-900 mb-4">Monthly Trends (Last 6 Months)</h3>
-          <div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {trends.length > 0 && (
+          <Card className="overflow-hidden">
+            <div className="flex items-center gap-3 mb-4">
+              <Sparkles className="text-orange-500" size={20} />
+              <h3 className="text-lg font-bold text-slate-900">Monthly Trends</h3>
+            </div>
             <Chart
+              type="line"
               labels={trends.map(t => t.month)}
               datasets={[
                 {
                   label: 'Rewards',
                   data: trends.map(t => t.rewards || 0),
-                  backgroundColor: 'rgba(255,94,0,0.8)'
+                  borderColor: 'rgb(249, 115, 22)',
+                  backgroundColor: 'rgba(249, 115, 22, 0.15)',
+                  tension: 0.35,
+                  fill: true,
                 },
                 {
-                  label: 'Performances',
+                  label: 'Performance Reviews',
                   data: trends.map(t => t.performances || 0),
-                  backgroundColor: 'rgba(34,197,94,0.8)'
-                }
+                  borderColor: 'rgb(34, 197, 94)',
+                  backgroundColor: 'rgba(34, 197, 94, 0.12)',
+                  tension: 0.35,
+                  fill: true,
+                },
               ]}
               options={{
                 responsive: true,
                 plugins: { legend: { position: 'top' } },
               }}
             />
-          </div>
+          </Card>
+        )}
+
+        {rewardByType.length > 0 && (
+          <Card className="overflow-hidden">
+            <div className="flex items-center gap-3 mb-4">
+              <Layers3 className="text-sky-500" size={20} />
+              <h3 className="text-lg font-bold text-slate-900">Reward Mix by Type</h3>
+            </div>
+            <Chart
+              type="doughnut"
+              labels={rewardByType.map(entry => entry._id?.replace('_', ' ') || 'Unknown')}
+              datasets={[
+                {
+                  label: 'Rewards',
+                  data: rewardByType.map(entry => entry.count || 0),
+                  backgroundColor: [
+                    'rgba(249, 115, 22, 0.85)',
+                    'rgba(16, 185, 129, 0.85)',
+                    'rgba(59, 130, 246, 0.85)',
+                    'rgba(168, 85, 247, 0.85)',
+                    'rgba(236, 72, 153, 0.85)',
+                    'rgba(245, 158, 11, 0.85)',
+                  ],
+                  borderColor: '#ffffff',
+                  borderWidth: 2,
+                },
+              ]}
+              options={{
+                responsive: true,
+                plugins: { legend: { position: 'bottom' } },
+              }}
+            />
+          </Card>
+        )}
+      </div>
+
+      {rewardByDepartment.length > 0 && (
+        <Card>
+          <h3 className="text-lg font-bold text-slate-900 mb-4">Rewards by Department</h3>
+          <Chart
+            labels={rewardByDepartment.map(entry => entry._id)}
+            datasets={[
+              {
+                label: 'Reward Count',
+                data: rewardByDepartment.map(entry => entry.count || 0),
+                backgroundColor: 'rgba(59, 130, 246, 0.75)',
+                borderRadius: 10,
+              },
+              {
+                label: 'Badge Count',
+                data: rewardByDepartment.map(entry => entry.badgeCount || 0),
+                backgroundColor: 'rgba(168, 85, 247, 0.75)',
+                borderRadius: 10,
+              },
+            ]}
+            options={{
+              responsive: true,
+              plugins: { legend: { position: 'top' } },
+            }}
+          />
+        </Card>
+      )}
+
+      {departmentAnalytics.length > 0 && (
+        <Card>
+          <h3 className="text-lg font-bold text-slate-900 mb-4">Department Performance Overview</h3>
+          <Chart
+            labels={departmentAnalytics.map(entry => entry.department)}
+            datasets={[
+              {
+                label: 'Average Performance',
+                data: departmentAnalytics.map(entry => Number(entry.averagePerformance || 0).toFixed(1)),
+                backgroundColor: 'rgba(16, 185, 129, 0.75)',
+                borderRadius: 10,
+              },
+              {
+                label: 'Reward Points',
+                data: departmentAnalytics.map(entry => entry.rewardSummary?.totalPoints || 0),
+                backgroundColor: 'rgba(249, 115, 22, 0.75)',
+                borderRadius: 10,
+              },
+            ]}
+            options={{
+              responsive: true,
+              plugins: { legend: { position: 'top' } },
+            }}
+          />
         </Card>
       )}
 

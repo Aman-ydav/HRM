@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import { Bar } from 'react-chartjs-2'
 import { Card } from './ui'
-import { DEPARTMENTS, REWARD_TYPES } from '../constants/enums'
+import { DEPARTMENTS } from '../constants/enums'
 
 function DepartmentRewardChart({ rewards = [] }) {
   const chartData = useMemo(() => {
@@ -18,7 +18,7 @@ function DepartmentRewardChart({ rewards = [] }) {
 
     // Aggregate reward data
     rewards.forEach(reward => {
-      const dept = reward.employee?.department || 'Unknown'
+      const dept = reward.employeeId?.department || 'Unknown'
       if (departmentData[dept]) {
         departmentData[dept].count += 1
         departmentData[dept].total += reward.points || reward.bonus || 0

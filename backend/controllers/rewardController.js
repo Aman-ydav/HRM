@@ -6,6 +6,10 @@ import Employee from '../models/Employee.js';
 import { sendSuccess, sendError, sendPaginatedResponse } from '../utils/responseUtils.js';
 import { getPaginationParams } from '../utils/paginationUtils.js';
 import { sendRewardNotification } from '../utils/emailUtils.js';
+import { REWARD_TYPE, BADGE_TYPES } from '../constants/index.js';
+
+const VALID_REWARD_TYPES = Object.values(REWARD_TYPE);
+const VALID_BADGES = Object.values(BADGE_TYPES);
 
 // Assign Reward
 export const assignReward = async (req, res, next) => {
@@ -27,9 +31,17 @@ export const assignReward = async (req, res, next) => {
     }
 
     // VALIDATION: Validate rewardType enum
-    const VALID_REWARD_TYPES = ['points', 'bonus', 'badge', 'employee_of_month'];
     if (!VALID_REWARD_TYPES.includes(rewardType)) {
       return sendError(res, `Invalid rewardType. Must be one of: ${VALID_REWARD_TYPES.join(', ')}`, 400);
+    }
+
+    if (rewardType === REWARD_TYPE.BADGE) {
+      if (!badge) {
+        return sendError(res, 'badge is required when rewardType is badge', 400);
+      }
+      if (!VALID_BADGES.includes(badge)) {
+        return sendError(res, `Invalid badge. Must be one of: ${VALID_BADGES.join(', ')}`, 400);
+      }
     }
 
     // VALIDATION: Check valid points/bonus ranges
@@ -395,6 +407,84 @@ export const getRewardsByType = async (req, res, next) => {
   }
 };
 
+// Get Rewards by Department
+export const getRewardsByDepartment = async (req, res, next) => {
+  try {
+    const { month } = req.query;
+
+    const query = { approvalStatus: 'approved' };
+    if (month) {
+      query.month = month;
+    } else {
+      const date = new Date();
+      query.month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    const byDepartment = await Reward.aggregate([
+      { $match: query },
+      {
+        $lookup: {
+          from: 'employees',
+          localField: 'employeeId',
+          foreignField: '_id',
+          as: 'employee',
+        },
+      },
+      { $unwind: '$employee' },
+      {
+        $group: {
+          _id: '$employee.department',
+          count: { $sum: 1 },
+          totalPoints: { $sum: '$points' },
+          totalBonus: { $sum: '$bonus' },
+          badgeCount: {
+            $sum: {
+              $cond: [{ $eq: ['$rewardType', 'badge'] }, 1, 0],
+            },
+          },
+        },
+      },
+      { $sort: { count: -1 } },
+    ]);
+
+    return sendSuccess(res, byDepartment, 'Rewards by department fetched successfully', 200);
+  } catch (error) {
+    console.error('Get rewards by department error:', error);
+    next(error);
+  }
+};
+
+// Get Badge Analytics
+export const getBadgeAnalytics = async (req, res, next) => {
+  try {
+    const { month } = req.query;
+
+    const query = { approvalStatus: 'approved', rewardType: REWARD_TYPE.BADGE };
+    if (month) {
+      query.month = month;
+    } else {
+      const date = new Date();
+      query.month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    const byBadge = await Reward.aggregate([
+      { $match: query },
+      {
+        $group: {
+          _id: '$badge',
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { count: -1 } },
+    ]);
+
+    return sendSuccess(res, byBadge, 'Badge analytics fetched successfully', 200);
+  } catch (error) {
+    console.error('Get badge analytics error:', error);
+    next(error);
+  }
+};
+
 export default {
   assignReward,
   approveReward,
@@ -402,4 +492,6 @@ export default {
   getRewardLeaderboard,
   getBonusHistory,
   getRewardsByType,
+  getRewardsByDepartment,
+  getBadgeAnalytics,
 };

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Button, Input, Badge, LoadingSpinner, Modal } from '../../components/ui'
+import { Card, Button, Input, Select, Badge, LoadingSpinner, Modal } from '../../components/ui'
 import { employeeService } from '../../lib/api'
 import { Edit2, Eye } from 'lucide-react'
+import { DEPARTMENTS, getDepartmentLabel } from '../../constants/enums'
 
 function EmployeesManagement() {
   const [employees, setEmployees] = useState([])
@@ -160,7 +161,7 @@ function EmployeesManagement() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <p className="text-slate-700">{emp.department}</p>
+                        <p className="text-slate-700">{getDepartmentLabel(emp.department)}</p>
                       </td>
                       <td className="px-4 py-3">
                         <p className="text-slate-600 text-sm">{emp.email}</p>
@@ -223,7 +224,7 @@ function EmployeesManagement() {
             <div className="flex justify-between"><span className="text-slate-600">Name</span><span className="text-slate-900">{selectedEmployee.firstName} {selectedEmployee.lastName}</span></div>
             <div className="flex justify-between"><span className="text-slate-600">Employee ID</span><span className="text-slate-900">{selectedEmployee.employeeId}</span></div>
             <div className="flex justify-between"><span className="text-slate-600">Email</span><span className="text-slate-900">{selectedEmployee.email}</span></div>
-            <div className="flex justify-between"><span className="text-slate-600">Department</span><span className="text-slate-900">{selectedEmployee.department}</span></div>
+            <div className="flex justify-between"><span className="text-slate-600">Department</span><span className="text-slate-900">{getDepartmentLabel(selectedEmployee.department)}</span></div>
             <div className="flex justify-between"><span className="text-slate-600">Position</span><span className="text-slate-900">{selectedEmployee.position}</span></div>
             <div className="flex justify-between"><span className="text-slate-600">Status</span><Badge variant={getStatusColor(selectedEmployee.status)}>{selectedEmployee.status}</Badge></div>
             <div className="flex justify-between"><span className="text-slate-600">Reward Points</span><span className="text-slate-900">{selectedEmployee.rewardPoints}</span></div>
@@ -250,7 +251,12 @@ function EmployeesManagement() {
           </div>
           <Input label="Phone" value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Input label="Department" value={editForm.department} onChange={(e) => setEditForm({ ...editForm, department: e.target.value })} />
+            <Select label="Department" value={editForm.department} onChange={(e) => setEditForm({ ...editForm, department: e.target.value })}>
+              <option value="">Select department</option>
+              {Object.values(DEPARTMENTS).map((d) => (
+                <option key={d.value} value={d.value}>{d.label}</option>
+              ))}
+            </Select>
             <Input label="Position" value={editForm.position} onChange={(e) => setEditForm({ ...editForm, position: e.target.value })} />
           </div>
           <div>

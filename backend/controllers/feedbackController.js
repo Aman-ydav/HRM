@@ -55,12 +55,15 @@ export const submitFeedback = async (req, res, next) => {
 
     await feedback.save();
 
-    // Send notification
-    await sendFeedbackNotification(
+    // Send notification as a non-blocking side effect.
+    // Feedback submission should still succeed even if email delivery fails.
+    sendFeedbackNotification(
       receiver.email,
       `${receiver.firstName} ${receiver.lastName}`,
       feedbackType
-    );
+    ).catch((err) => {
+      console.warn('Feedback notification email failed (non-critical):', err.message);
+    });
 
     return sendSuccess(res, feedback, 'Feedback submitted successfully', 201);
   } catch (error) {

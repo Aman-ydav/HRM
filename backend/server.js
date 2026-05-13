@@ -22,7 +22,6 @@ const validateEnvironment = () => {
   const recommendedVars = [
     'CORS_ALLOWED_ORIGINS',
     'BREVO_API_KEY',
-    'SMTP_FROM_EMAIL',
     'GENAI_API_KEY',
   ];
 
@@ -41,6 +40,10 @@ const validateEnvironment = () => {
     if (!process.env[variable]) {
       missingRecommended.push(variable);
     }
+  }
+
+  if (!process.env.BREVO_SENDER_EMAIL && !process.env.SMTP_FROM_EMAIL && !process.env.EMAIL_FROM) {
+    missingRecommended.push('BREVO_SENDER_EMAIL (or SMTP_FROM_EMAIL)');
   }
 
   // Report missing required variables

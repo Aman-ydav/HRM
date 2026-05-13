@@ -1,70 +1,56 @@
 // utils/emailUtils.js
 // Email Service Utility
 
-import axios from 'axios';
-import nodemailer from 'nodemailer';
+import 'dotenv/config';
+import brevoPkg from '@getbrevo/brevo';
 import { EMAIL_CONFIG } from '../config/email.js';
 
-const hasBrevoConfig = Boolean(EMAIL_CONFIG.brevoApiKey);
+const { TransactionalEmailsApi } = brevoPkg;
+const SendSmtpEmail = brevoPkg.SendSmtpEmail || brevoPkg.CreateSmtpEmail;
 
-// Create transporter only for legacy SMTP fallback
-const transporter = hasBrevoConfig ? null : nodemailer.createTransport({
-  service: EMAIL_CONFIG.service,
-  auth: {
-    user: EMAIL_CONFIG.auth.user,
-    pass: EMAIL_CONFIG.auth.pass,
-  },
-});
+const brevoApi = new TransactionalEmailsApi();
 
-const sendViaBrevo = async (to, subject, htmlContent) => {
-  const response = await axios.post(
-    'https://api.brevo.com/v3/smtp/email',
-    {
-      sender: {
-        email: EMAIL_CONFIG.from.includes('<')
-          ? EMAIL_CONFIG.from.match(/<([^>]+)>/)?.[1] || EMAIL_CONFIG.from
-          : EMAIL_CONFIG.from,
-        name: EMAIL_CONFIG.from.includes('<')
-          ? EMAIL_CONFIG.from.split('<')[0].trim()
-          : 'HRM Reward System',
-      },
-      to: [{ email: to }],
-      subject,
-      htmlContent,
-    },
-    {
-      headers: {
-        'api-key': EMAIL_CONFIG.brevoApiKey,
-        'Content-Type': 'application/json',
-        accept: 'application/json',
-      },
-    }
-  );
+if (EMAIL_CONFIG.brevoApiKey) {
+  brevoApi.apiClient.authentications['api-key'].apiKey = EMAIL_CONFIG.brevoApiKey;
+}
 
-  return response.data;
-};
+const normalizeRecipients = (to) =>
+  Array.isArray(to) ? to.map((email) => ({ email })) : [{ email: to }];
 
-export const sendEmail = async (to, subject, htmlContent) => {
+export const sendEmail = async ({ to, subject, htmlContent, textContent }) => {
   try {
-    if (hasBrevoConfig) {
-      const info = await sendViaBrevo(to, subject, htmlContent);
-      console.log(`✓ Email sent via Brevo: ${info.messageId || 'ok'}`);
-      return { success: true, info };
+    if (!EMAIL_CONFIG.brevoApiKey) {
+      throw new Error('Missing BREVO_API_KEY');
     }
 
-    const mailOptions = {
-      from: EMAIL_CONFIG.from,
-      to,
-      subject,
-      html: htmlContent,
-    };
+    if (!EMAIL_CONFIG.senderEmail) {
+      throw new Error('Missing sender email. Set BREVO_SENDER_EMAIL or SMTP_FROM_EMAIL');
+    }
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`✓ Email sent: ${info.response}`);
-    return { success: true, info };
+    const message = new SendSmtpEmail();
+    message.sender = {
+      email: EMAIL_CONFIG.senderEmail,
+      name: EMAIL_CONFIG.senderName || 'HRM Reward System',
+    };
+    message.to = normalizeRecipients(to);
+    message.subject = subject;
+
+    if (htmlContent) message.htmlContent = htmlContent;
+    if (textContent) message.textContent = textContent;
+
+    const response = await brevoApi.sendTransacEmail(message);
+    console.log('✓ Email sent via Brevo SDK');
+    return { success: true, info: response?.body || response, provider: 'brevo_sdk' };
   } catch (error) {
-    console.error(`✗ Error sending email: ${error.message}`);
-    return { success: false, error: error.message };
+    const errorMessage =
+      error?.response?.body?.message ||
+      error?.response?.text ||
+      error?.body?.message ||
+      error?.message ||
+      'Unknown email provider error';
+
+    console.error(`✗ Error sending email: ${errorMessage}`);
+    return { success: false, error: errorMessage, provider: 'brevo_sdk' };
   }
 };
 
@@ -77,7 +63,11 @@ export const sendWelcomeEmail = async (email, name) => {
     <p>Best regards,<br>HRM Team</p>
   `;
 
-  return sendEmail(email, 'Welcome to HRM Reward System', htmlContent);
+  return sendEmail({
+    to: email,
+    subject: 'Welcome to HRM Reward System',
+    htmlContent,
+  });
 };
 
 export const sendRewardNotification = async (email, name, rewardType, details) => {
@@ -90,7 +80,11 @@ export const sendRewardNotification = async (email, name, rewardType, details) =
     <p>Best regards,<br>HRM Team</p>
   `;
 
-  return sendEmail(email, 'Reward Notification', htmlContent);
+  return sendEmail({
+    to: email,
+    subject: 'Reward Notification',
+    htmlContent,
+  });
 };
 
 export const sendPasswordResetEmail = async (email, resetLink) => {
@@ -103,7 +97,11 @@ export const sendPasswordResetEmail = async (email, resetLink) => {
     <p>Best regards,<br>HRM Team</p>
   `;
 
-  return sendEmail(email, 'Password Reset Request', htmlContent);
+  return sendEmail({
+    to: email,
+    subject: 'Password Reset Request',
+    htmlContent,
+  });
 };
 
 export const sendFeedbackNotification = async (email, name, feedbackType) => {
@@ -115,7 +113,11 @@ export const sendFeedbackNotification = async (email, name, feedbackType) => {
     <p>Best regards,<br>HRM Team</p>
   `;
 
-  return sendEmail(email, 'Feedback Notification', htmlContent);
+  return sendEmail({
+    to: email,
+    subject: 'Feedback Notification',
+    htmlContent,
+  });
 };
 
 export default {
